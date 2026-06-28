@@ -1,0 +1,24 @@
+// This is your Prisma schema file.
+// Learn more about it at: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider   = "prisma-client-js"
+  // output   = "../src/lib/generated/prisma"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Pooled connection — used by the application at runtime
+  // url      = env("DATABASE_URL")
+  // Direct connection — used by Prisma CLI for migrations
+  // directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Models are added incrementally per milestone.
+// Phase 2 adds: User, RefreshToken, VerificationToken
+// Phase 4 adds: Organization, Membership, Team
+// Phase 5 adds: Project, ProjectMember
+// Phase 6 adds: Issue, Label, Comment, Attachment
+// ─────────────────────────────────────────────────────────────────────────────

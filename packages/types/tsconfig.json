@@ -1,0 +1,10 @@
+{
+  "extends": "@projecthub/config/typescript/base",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "rootDir": "./src"
+  },
+  "include": ["src"]
+}
