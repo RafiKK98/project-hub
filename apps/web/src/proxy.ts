@@ -1,7 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/projects", "/settings", "/profile"];
+// Routes that require authentication
+const PROTECTED_PREFIXES = [
+  "/dashboard",
+  "/orgs",
+  "/projects",
+  "/settings",
+  "/profile",
+];
 
+// Routes only accessible when NOT authenticated
 const AUTH_ROUTES = [
   "/login",
   "/register",
@@ -24,16 +32,17 @@ export function proxy(request: NextRequest): NextResponse {
   );
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
-  //   Redirect unauthenticated users away from protected routes
+  // Redirect unauthenticated users away from protected routes
   if (isProtected && !isAuthenticated) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  //   Redirect authenticated users away from auth pages
-  if (isAuthRoute && isAuthenticated)
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Redirect authenticated users away from auth pages
+  if (isAuthRoute && isAuthenticated) {
+    return NextResponse.redirect(new URL("/orgs", request.url));
+  }
 
   return NextResponse.next();
 }
