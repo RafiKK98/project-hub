@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
+import { AuthModule } from './auth/auth.module';
+import { CommonModule } from './common/common.module';
 import appConfig from './config/app.config';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
-import { UsersService } from './users/users.service';
 import { UsersModule } from './users/users.module';
-import { AuthModule } from './auth/auth.module';
+import { UsersService } from './users/users.service';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from './auth/auth.module';
 
     // ── Core infrastructure ──────────────────────────────────────────────────
     DatabaseModule,
+    CommonModule,
 
     // ── Feature modules ──────────────────────────────────────────────────────
     HealthModule,

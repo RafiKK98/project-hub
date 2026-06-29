@@ -7,7 +7,9 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UserRole } from '@prisma/client';
 import type { AuthResponse, AuthTokens, AuthUser } from '@projecthub/types';
+import { Permission, RequirePermissions, Roles } from '../common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthService } from './auth.service';
@@ -55,5 +57,32 @@ export class AuthController {
   @ApiOperation({ summary: 'Get the currently authenticated user' })
   async me(@CurrentUser() user: JwtPayload): Promise<AuthUser> {
     return this.auth.getMe(user.sub);
+  }
+
+  // ── Authorization smoke tests (remove in Phase 15) ────────────────────────
+
+  @Get('test/admin-only')
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Dev] Returns 200 only for ADMIN role' })
+  testAdminOnly(): { message: string } {
+    return { message: 'You are an admin' };
+  }
+  @Get('test/user-only')
+  @Roles(UserRole.USER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Dev] Returns 200 only for USER role' })
+  testUserOnly(): { message: string } {
+    return { message: 'You are a user' };
+  }
+
+  @Get('test/permission')
+  @RequirePermissions(Permission.PLATFORM_MANAGE_USERS)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: '[Dev] Returns 200 only if user has PLATFORM_MANAGE_USERS',
+  })
+  testPermission(): { message: string } {
+    return { message: 'You have platform:manage_users permission' };
   }
 }
