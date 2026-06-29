@@ -71,6 +71,7 @@ export class AuthService {
     }
 
     const tokens = await this.tokens.issueTokens(user);
+    console.warn({ user: this.toAuthUser(user), tokens });
     return { user: this.toAuthUser(user), tokens };
   }
 

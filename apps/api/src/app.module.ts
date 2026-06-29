@@ -8,6 +8,7 @@ import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
 import { UsersModule } from './users/users.module';
 import { UsersService } from './users/users.service';
+import { OrganizationsModule } from './organizations/organizations.module';
 
 @Module({
   imports: [
@@ -31,6 +32,8 @@ import { UsersService } from './users/users.service';
     UsersModule,
 
     AuthModule,
+
+    OrganizationsModule,
 
     // Future modules are added here:
     // AuthModule, UsersModule, OrganizationsModule, etc.
