@@ -10,6 +10,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { ProjectsModule } from './projects/projects.module';
 import { UsersModule } from './users/users.module';
 import { UsersService } from './users/users.service';
+import { IssuesModule } from './issues/issues.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { UsersService } from './users/users.service';
     AuthModule,
     OrganizationsModule,
     ProjectsModule,
+    IssuesModule,
   ],
   controllers: [AppController],
   providers: [UsersService],

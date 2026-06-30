@@ -2,16 +2,12 @@
 // Learn more about it at: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider   = "prisma-client-js"
-  // output   = "../src/lib/generated/prisma"
-  engineType = "library"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  // Pooled connection — used by the application at runtime
   // url      = env("DATABASE_URL")
-  // Direct connection — used by Prisma CLI for migrations
   // directUrl = env("DIRECT_URL")
 }
 
@@ -42,6 +38,8 @@ model User {
   invitationsSent    Invitation[]        @relation("InvitedBy")
   projectsCreated    Project[]           @relation("ProjectsCreated")
   projectMembers     ProjectMember[]
+  issuesCreated      Issue[]             @relation("IssuesCreated")
+  issuesAssigned     Issue[]             @relation("IssuesAssigned")
 
   @@index([email])
   @@map("users")
@@ -205,6 +203,7 @@ model Project {
   organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy    User            @relation("ProjectsCreated", fields: [createdById], references: [id])
   members      ProjectMember[]
+  issues       Issue[]
 
   @@unique([organizationId, identifier])
   @@index([organizationId])
@@ -226,4 +225,50 @@ model ProjectMember {
   @@index([projectId])
   @@index([userId])
   @@map("project_members")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 6 — Issues
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum IssueStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
+
+enum IssuePriority {
+  NO_PRIORITY
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Issue {
+  id          String        @id @default(cuid())
+  number      Int // Sequential within the project — combine with project.identifier for display
+  title       String
+  description String?
+  status      IssueStatus   @default(BACKLOG)
+  priority    IssuePriority @default(NO_PRIORITY)
+  projectId   String
+  createdById String
+  assigneeId  String?
+  dueDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("IssuesCreated", fields: [createdById], references: [id])
+  assignee  User?   @relation("IssuesAssigned", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, number])
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([status])
+  @@map("issues")
 }
