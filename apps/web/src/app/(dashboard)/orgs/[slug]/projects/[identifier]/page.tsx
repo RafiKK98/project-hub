@@ -1,18 +1,25 @@
 "use client";
 
+import { IssueBoard } from "@/components/issues/issue-board";
 import { IssueListGrouped } from "@/components/issues/issue-list-grouped";
+import { ViewToggle, type IssueView } from "@/components/issues/view-toggle";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useIssues } from "@/hooks/use-issues";
+import { issueKeys, useIssues } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
   useProjectByIdentifier,
   useProjectMembers,
 } from "@/hooks/use-projects";
+import { ApiClientError } from "@/lib/api-client";
+import { issuesApi } from "@/lib/issues-api";
+import type { IssueStatus } from "@projecthub/types";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ListTodo, Plus, Settings, Users } from "lucide-react";
 import Link from "next/link";
-import { use } from "react";
+import { use, useState } from "react";
+import { toast } from "sonner";
 
 interface ProjectPageProps {
   params: Promise<{ slug: string; identifier: string }>;
@@ -22,6 +29,8 @@ const MANAGER_ROLES = ["MANAGER"];
 
 export default function ProjectPage({ params }: ProjectPageProps) {
   const { slug, identifier } = use(params);
+  const [view, setView] = useState<IssueView>("board");
+  const queryClient = useQueryClient();
 
   const { data: org } = useOrganization(slug);
   const { data: project, isLoading } = useProjectByIdentifier(
@@ -37,9 +46,47 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   const canManage =
     project && MANAGER_ROLES.includes(project.currentUserRole ?? "");
 
+  // Shared status-update handler for board drag-and-drop.
+  // Uses the same optimistic-update + invalidation pattern as the detail page's
+  // useUpdateIssue mutation, but operates on the list query cache directly
+  // since the board reads from the list, not a single-issue query.
+  async function handleUpdateStatus(
+    issueNumber: number,
+    newStatus: IssueStatus,
+  ) {
+    if (!org || !project) return;
+
+    const listKey = issueKeys.lists(org.id, project.id, undefined);
+    const previous = queryClient.getQueryData(listKey);
+
+    queryClient.setQueryData(listKey, (old: typeof previous) =>
+      Array.isArray(old)
+        ? old.map((i) =>
+            i.number === issueNumber ? { ...i, status: newStatus } : i,
+          )
+        : old,
+    );
+
+    try {
+      await issuesApi.update(org.id, project.id, issueNumber, {
+        status: newStatus,
+      });
+      queryClient.invalidateQueries({
+        queryKey: issueKeys.all(org.id, project.id),
+      });
+    } catch (error) {
+      queryClient.setQueryData(listKey, previous);
+      const message =
+        error instanceof ApiClientError
+          ? error.body.message
+          : "Failed to update status";
+      toast.error(message);
+    }
+  }
+
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-12">
         <div className="space-y-4">
           <div className="h-8 w-48 animate-pulse rounded bg-muted" />
           <div className="h-4 w-72 animate-pulse rounded bg-muted" />
@@ -63,7 +110,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
+    <div className="mx-auto max-w-5xl px-4 py-12">
       <Link
         href={`/orgs/${slug}`}
         className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -109,9 +156,12 @@ export default function ProjectPage({ params }: ProjectPageProps) {
       {/* Issues */}
       <section className="mb-10">
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {issues?.length ?? 0} {issues?.length === 1 ? "issue" : "issues"}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              {issues?.length ?? 0} {issues?.length === 1 ? "issue" : "issues"}
+            </p>
+            <ViewToggle view={view} onChange={setView} />
+          </div>
           <Link href={`/orgs/${slug}/projects/${identifier}/issues/new`}>
             <Button size="sm">
               <Plus className="h-4 w-4" />
@@ -147,6 +197,13 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               </Button>
             </Link>
           </div>
+        ) : view === "board" ? (
+          <IssueBoard
+            issues={issues ?? []}
+            orgSlug={slug}
+            projectIdentifier={identifier}
+            onUpdateStatus={handleUpdateStatus}
+          />
         ) : (
           <IssueListGrouped
             issues={issues ?? []}
