@@ -1,14 +1,16 @@
 "use client";
 
+import { IssueListGrouped } from "@/components/issues/issue-list-grouped";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useIssues } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
   useProjectByIdentifier,
   useProjectMembers,
 } from "@/hooks/use-projects";
-import { ArrowLeft, ListTodo, Settings, Users } from "lucide-react";
+import { ArrowLeft, ListTodo, Plus, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 
@@ -27,6 +29,10 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     identifier,
   );
   const { data: members } = useProjectMembers(org?.id ?? "", project?.id ?? "");
+  const { data: issues, isLoading: issuesLoading } = useIssues(
+    org?.id ?? "",
+    project?.id ?? "",
+  );
 
   const canManage =
     project && MANAGER_ROLES.includes(project.currentUserRole ?? "");
@@ -57,7 +63,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12">
+    <div className="mx-auto max-w-4xl px-4 py-12">
       <Link
         href={`/orgs/${slug}`}
         className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -100,19 +106,54 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         )}
       </div>
 
-      {/* Issues placeholder */}
-      <section className="mb-8">
-        <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border py-16 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <ListTodo className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <div>
-            <p className="font-medium text-foreground">Issues coming soon</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Issue tracking arrives in the next phase
-            </p>
-          </div>
+      {/* Issues */}
+      <section className="mb-10">
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            {issues?.length ?? 0} {issues?.length === 1 ? "issue" : "issues"}
+          </p>
+          <Link href={`/orgs/${slug}/projects/${identifier}/issues/new`}>
+            <Button size="sm">
+              <Plus className="h-4 w-4" />
+              New issue
+            </Button>
+          </Link>
         </div>
+
+        {issuesLoading ? (
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="h-10 animate-pulse rounded-lg border border-border bg-muted"
+              />
+            ))}
+          </div>
+        ) : issues?.length === 0 ? (
+          <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+              <ListTodo className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-medium text-foreground">No issues yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Create your first issue to start tracking work
+              </p>
+            </div>
+            <Link href={`/orgs/${slug}/projects/${identifier}/issues/new`}>
+              <Button size="sm">
+                <Plus className="h-4 w-4" />
+                Create issue
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <IssueListGrouped
+            issues={issues ?? []}
+            orgSlug={slug}
+            projectIdentifier={identifier}
+          />
+        )}
       </section>
 
       {/* Members */}
