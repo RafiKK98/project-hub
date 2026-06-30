@@ -6,9 +6,10 @@ import { CommonModule } from './common/common.module';
 import appConfig from './config/app.config';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { OrganizationsModule } from './organizations/organizations.module';
+import { ProjectsModule } from './projects/projects.module';
 import { UsersModule } from './users/users.module';
 import { UsersService } from './users/users.service';
-import { OrganizationsModule } from './organizations/organizations.module';
 
 @Module({
   imports: [
@@ -28,15 +29,10 @@ import { OrganizationsModule } from './organizations/organizations.module';
 
     // ── Feature modules ──────────────────────────────────────────────────────
     HealthModule,
-
     UsersModule,
-
     AuthModule,
-
     OrganizationsModule,
-
-    // Future modules are added here:
-    // AuthModule, UsersModule, OrganizationsModule, etc.
+    ProjectsModule,
   ],
   controllers: [AppController],
   providers: [UsersService],
