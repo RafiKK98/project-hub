@@ -346,7 +346,7 @@ export class ProjectsService {
     return {
       id: project.id,
       name: project.name,
-      indentifier: project.identifier,
+      identifier: project.identifier,
       description: project.description,
       status: project.status as ProjectDto['status'],
       organizationId: project.organizationId,

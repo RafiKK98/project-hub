@@ -5,7 +5,7 @@ export type ProjectMemberRole = "MANAGER" | "DEVELOPER" | "REPORTER" | "GUEST";
 export interface ProjectDto {
   id: string;
   name: string;
-  indentifier: string;
+  identifier: string;
   description: string | null;
   status: ProjectStatus;
   organizationId: string;
