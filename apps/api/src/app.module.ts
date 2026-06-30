@@ -11,6 +11,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { UsersModule } from './users/users.module';
 import { UsersService } from './users/users.service';
 import { IssuesModule } from './issues/issues.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { IssuesModule } from './issues/issues.module';
     OrganizationsModule,
     ProjectsModule,
     IssuesModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [UsersService],
