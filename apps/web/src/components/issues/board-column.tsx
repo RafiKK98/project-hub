@@ -6,9 +6,9 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { IssueDto, IssueStatus } from "@projecthub/types";
+import type { IssueDto, IssueStatus } from "@projecthub/types";
 import { BoardCard } from "./board-card";
-import { getStatusLabel, StatusIcon } from "./status-icon";
+import { StatusIcon, getStatusLabel } from "./status-icon";
 
 interface BoardColumnProps {
   status: IssueStatus;
@@ -23,13 +23,14 @@ export function BoardColumn({
   orgSlug,
   projectIdentifier,
 }: BoardColumnProps) {
+  // The droppable id matches the status string so DragOverEvent can identify it
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
     <div
       className={cn(
         "flex w-72 shrink-0 flex-col rounded-lg border border-border bg-muted/20 transition-colors",
-        isOver && "border-foreground/40 bg-muted/40",
+        isOver && "border-foreground/30 bg-muted/40",
       )}
     >
       <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
@@ -40,6 +41,11 @@ export function BoardColumn({
         <span className="text-xs text-muted-foreground">{issues.length}</span>
       </div>
 
+      {/*
+        SortableContext needs the card ids in their current sorted order.
+        This is what tells @dnd-kit where to draw the drop indicator.
+        setNodeRef on the inner div makes the empty column area a valid drop zone.
+      */}
       <SortableContext
         items={issues.map((i) => i.id)}
         strategy={verticalListSortingStrategy}

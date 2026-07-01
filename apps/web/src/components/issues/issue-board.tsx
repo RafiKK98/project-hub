@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  closestCorners,
+  closestCenter,
   DndContext,
   DragOverlay,
   KeyboardSensor,
@@ -12,9 +12,9 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { IssueDto, IssueStatus } from "@projecthub/types";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BoardCard } from "./board-card";
 import { BoardColumn } from "./board-column";
 import { STATUS_OPTIONS } from "./status-icon";
@@ -31,15 +31,15 @@ interface IssueBoardProps {
 }
 
 /**
- * Computes the midpoint boardOrder between two neighbors.
- * If no prev, returns next - 1000. If no next, returns prev + 1000.
+ * Computes a boardOrder float to insert `item` between `prev` and `next`.
+ * Uses gaps of 1000 so there's plenty of precision before needing a reindex.
  */
-function computeBoardOrder(
+function orderBetween(
   prev: IssueDto | undefined,
   next: IssueDto | undefined,
 ): number {
   if (!prev && !next) return 1000;
-  if (!prev) return (next?.boardOrder ?? 1000) - 1000;
+  if (!prev) return next!.boardOrder - 1000;
   if (!next) return prev.boardOrder + 1000;
   return (prev.boardOrder + next.boardOrder) / 2;
 }
@@ -50,16 +50,21 @@ export function IssueBoard({
   projectIdentifier,
   onReorder,
 }: IssueBoardProps) {
+  // localIssues is our single source of truth during a drag session.
+  // We keep it in sync with the server copy between drags.
+  const [localIssues, setLocalIssues] = useState<IssueDto[]>(
+    [...issues].sort((a, b) => a.boardOrder - b.boardOrder),
+  );
   const [activeIssue, setActiveIssue] = useState<IssueDto | null>(null);
-  // Local shadow copy so we can do optimistic column reassignment during drag-over
-  const [localIssues, setLocalIssues] = useState<IssueDto[]>(issues);
 
-  // Keep localIssues in sync when server data changes (after mutations settle)
-  if (
-    JSON.stringify(issues.map((i) => i.id + i.status + i.boardOrder)) !==
-    JSON.stringify(localIssues.map((i) => i.id + i.status + i.boardOrder))
-  ) {
-    setLocalIssues(issues);
+  // Track the last server copy so we know when to resync
+  const lastServerKey = useRef("");
+  const serverKey = issues
+    .map((i) => `${i.id}:${i.status}:${i.boardOrder}`)
+    .join("|");
+  if (serverKey !== lastServerKey.current && !activeIssue) {
+    lastServerKey.current = serverKey;
+    setLocalIssues([...issues].sort((a, b) => a.boardOrder - b.boardOrder));
   }
 
   const sensors = useSensors(
@@ -69,84 +74,110 @@ export function IssueBoard({
     }),
   );
 
-  function handleDragStart(event: DragStartEvent) {
-    const issue = localIssues.find((i) => i.id === event.active.id);
-    setActiveIssue(issue ?? null);
+  function handleDragStart({ active }: DragStartEvent) {
+    setActiveIssue(localIssues.find((i) => i.id === active.id) ?? null);
   }
 
-  function handleDragOver(event: DragOverEvent) {
-    const { active, over } = event;
+  function handleDragOver({ active, over }: DragOverEvent) {
     if (!over || active.id === over.id) return;
 
     const activeIssue = localIssues.find((i) => i.id === active.id);
     if (!activeIssue) return;
 
-    // Dropped over a column droppable (not a card)
+    // `over` is either a column id (string status) or another card id (cuid)
     const overIsColumn = STATUS_OPTIONS.includes(over.id as IssueStatus);
     const targetStatus = overIsColumn
       ? (over.id as IssueStatus)
       : localIssues.find((i) => i.id === over.id)?.status;
 
-    if (!targetStatus || targetStatus === activeIssue.status) return;
+    if (!targetStatus) return;
 
-    // Optimistically move to target column
-    setLocalIssues((prev) =>
-      prev.map((i) =>
-        i.id === activeIssue.id ? { ...i, status: targetStatus } : i,
-      ),
-    );
+    if (targetStatus !== activeIssue.status) {
+      // Moving to a different column — reassign status optimistically so the
+      // SortableContext in the target column can calculate the correct insertion index
+      setLocalIssues((prev) =>
+        prev.map((i) =>
+          i.id === activeIssue.id ? { ...i, status: targetStatus } : i,
+        ),
+      );
+    }
   }
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
+  function handleDragEnd({ active, over }: DragEndEvent) {
+    const draggedIssue = localIssues.find((i) => i.id === active.id);
     setActiveIssue(null);
 
-    if (!over) {
-      setLocalIssues(issues); // reset on cancelled drag
+    if (!over || !draggedIssue) {
+      // Cancelled — restore server state
+      setLocalIssues([...issues].sort((a, b) => a.boardOrder - b.boardOrder));
       return;
     }
 
-    const draggedIssue = localIssues.find((i) => i.id === active.id);
-    if (!draggedIssue) return;
-
-    // Determine target status
     const overIsColumn = STATUS_OPTIONS.includes(over.id as IssueStatus);
-    const targetStatus = overIsColumn
+    const finalStatus = overIsColumn
       ? (over.id as IssueStatus)
       : (localIssues.find((i) => i.id === over.id)?.status ??
         draggedIssue.status);
 
-    // Get ordered issues in target column (excluding the dragged one)
-    const columnIssues = localIssues
-      .filter((i) => i.status === targetStatus && i.id !== active.id)
+    // Get the full ordered list for the target column (including the dragged item
+    // already in it from handleDragOver's optimistic update)
+    const columnItems = localIssues
+      .filter((i) => i.status === finalStatus)
       .sort((a, b) => a.boardOrder - b.boardOrder);
 
-    let newBoardOrder: number;
+    const oldIndex = columnItems.findIndex((i) => i.id === active.id);
 
+    let newIndex: number;
     if (overIsColumn) {
-      // Dropped directly onto column header → place at end
-      const last = columnIssues[columnIssues.length - 1];
-      newBoardOrder = computeBoardOrder(last, undefined);
+      // Dropped on column header → put at end
+      newIndex = columnItems.length - 1;
     } else {
-      // Dropped onto a card → insert before/after that card
-      const overIndex = columnIssues.findIndex((i) => i.id === over.id);
-      if (overIndex === -1) {
-        const last = columnIssues[columnIssues.length - 1];
-        newBoardOrder = computeBoardOrder(last, undefined);
-      } else {
-        const prev = columnIssues[overIndex - 1];
-        const next = columnIssues[overIndex];
-        newBoardOrder = computeBoardOrder(prev, next);
-      }
+      newIndex = columnItems.findIndex((i) => i.id === over.id);
     }
 
-    onReorder(draggedIssue.number, newBoardOrder, targetStatus);
+    if (newIndex === -1) newIndex = columnItems.length - 1;
+
+    // Use arrayMove to get the correct final order — this is what fixes the
+    // off-by-one: arrayMove handles both up and down moves correctly
+    const reordered = arrayMove(columnItems, oldIndex, newIndex);
+
+    const movedIndex = reordered.findIndex((i) => i.id === draggedIssue.id);
+    const prev = reordered[movedIndex - 1];
+    const next = reordered[movedIndex + 1];
+    const newBoardOrder = orderBetween(prev, next);
+
+    // Apply to local state immediately for smooth UI
+    setLocalIssues((prev) =>
+      prev.map((i) =>
+        i.id === draggedIssue.id
+          ? { ...i, boardOrder: newBoardOrder, status: finalStatus }
+          : i,
+      ),
+    );
+
+    // Persist — only call if something actually changed
+    if (
+      newBoardOrder !== draggedIssue.boardOrder ||
+      finalStatus !== draggedIssue.status
+    ) {
+      onReorder(draggedIssue.number, newBoardOrder, finalStatus);
+    }
   }
+
+  const issuesByStatus = STATUS_OPTIONS.reduce<Record<IssueStatus, IssueDto[]>>(
+    (acc, status) => {
+      acc[status] = localIssues
+        .filter((i) => i.status === status)
+        .sort((a, b) => a.boardOrder - b.boardOrder);
+      return acc;
+    },
+    {} as Record<IssueStatus, IssueDto[]>,
+  );
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
@@ -156,16 +187,14 @@ export function IssueBoard({
           <BoardColumn
             key={status}
             status={status}
-            issues={localIssues
-              .filter((i) => i.status === status)
-              .sort((a, b) => a.boardOrder - b.boardOrder)}
+            issues={issuesByStatus[status]}
             orgSlug={orgSlug}
             projectIdentifier={projectIdentifier}
           />
         ))}
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={{ duration: 150, easing: "ease" }}>
         {activeIssue && (
           <div className="rotate-1 opacity-90 shadow-xl">
             <BoardCard
