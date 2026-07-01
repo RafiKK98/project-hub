@@ -6,20 +6,16 @@ import { ViewToggle, type IssueView } from "@/components/issues/view-toggle";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { issueKeys, useIssues } from "@/hooks/use-issues";
+import { useIssues, useReorderIssue } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
   useProjectByIdentifier,
   useProjectMembers,
 } from "@/hooks/use-projects";
-import { ApiClientError } from "@/lib/api-client";
-import { issuesApi } from "@/lib/issues-api";
 import type { IssueStatus } from "@projecthub/types";
-import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ListTodo, Plus, Settings, Users } from "lucide-react";
 import Link from "next/link";
-import { use, useState } from "react";
-import { toast } from "sonner";
+import { use, useCallback, useState } from "react";
 
 interface ProjectPageProps {
   params: Promise<{ slug: string; identifier: string }>;
@@ -30,7 +26,6 @@ const MANAGER_ROLES = ["MANAGER"];
 export default function ProjectPage({ params }: ProjectPageProps) {
   const { slug, identifier } = use(params);
   const [view, setView] = useState<IssueView>("board");
-  const queryClient = useQueryClient();
 
   const { data: org } = useOrganization(slug);
   const { data: project, isLoading } = useProjectByIdentifier(
@@ -42,47 +37,20 @@ export default function ProjectPage({ params }: ProjectPageProps) {
     org?.id ?? "",
     project?.id ?? "",
   );
+  const reorderIssue = useReorderIssue(org?.id ?? "", project?.id ?? "");
 
   const canManage =
     project && MANAGER_ROLES.includes(project.currentUserRole ?? "");
 
-  // Shared status-update handler for board drag-and-drop.
-  // Uses the same optimistic-update + invalidation pattern as the detail page's
-  // useUpdateIssue mutation, but operates on the list query cache directly
-  // since the board reads from the list, not a single-issue query.
-  async function handleUpdateStatus(
-    issueNumber: number,
-    newStatus: IssueStatus,
-  ) {
-    if (!org || !project) return;
-
-    const listKey = issueKeys.lists(org.id, project.id, undefined);
-    const previous = queryClient.getQueryData(listKey);
-
-    queryClient.setQueryData(listKey, (old: typeof previous) =>
-      Array.isArray(old)
-        ? old.map((i) =>
-            i.number === issueNumber ? { ...i, status: newStatus } : i,
-          )
-        : old,
-    );
-
-    try {
-      await issuesApi.update(org.id, project.id, issueNumber, {
-        status: newStatus,
+  const handleReorder = useCallback(
+    (issueNumber: number, newBoardOrder: number, newStatus: IssueStatus) => {
+      reorderIssue.mutate({
+        number: issueNumber,
+        payload: { boardOrder: newBoardOrder, status: newStatus },
       });
-      queryClient.invalidateQueries({
-        queryKey: issueKeys.all(org.id, project.id),
-      });
-    } catch (error) {
-      queryClient.setQueryData(listKey, previous);
-      const message =
-        error instanceof ApiClientError
-          ? error.body.message
-          : "Failed to update status";
-      toast.error(message);
-    }
-  }
+    },
+    [reorderIssue],
+  );
 
   if (isLoading) {
     return (
@@ -202,7 +170,7 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             issues={issues ?? []}
             orgSlug={slug}
             projectIdentifier={identifier}
-            onUpdateStatus={handleUpdateStatus}
+            onReorder={handleReorder}
           />
         ) : (
           <IssueListGrouped

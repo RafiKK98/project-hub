@@ -251,11 +251,12 @@ enum IssuePriority {
 
 model Issue {
   id          String        @id @default(cuid())
-  number      Int // Sequential within the project — combine with project.identifier for display
+  number      Int
   title       String
   description String?
   status      IssueStatus   @default(BACKLOG)
   priority    IssuePriority @default(NO_PRIORITY)
+  boardOrder  Float         @default(0)
   projectId   String
   createdById String
   assigneeId  String?

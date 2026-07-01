@@ -6,7 +6,7 @@ import {
 import { IssuePriority, MemberRole, Prisma } from '@prisma/client';
 import { IssueDto, IssueFilters } from '@projecthub/types';
 import { PrismaService } from '../database/prisma.service';
-import { CreateIssueDto, UpdateIssueDto } from './dto';
+import { CreateIssueDto, ReorderIssueDto, UpdateIssueDto } from './dto';
 
 const ORG_ADMIN_ROLES: MemberRole[] = [MemberRole.ADMIN, MemberRole.OWNER];
 
@@ -31,36 +31,47 @@ export class IssuesService {
   ): Promise<IssueDto> {
     const project = await this.assertProjectAccess(orgId, projectId, userId);
 
-    if (dto.assigneeId)
+    if (dto.assigneeId) {
       await this.assertProjectMember(projectId, dto.assigneeId);
+    }
 
-    // Serializable transaction prevents two concurrent creates from
-    // computing the same "next number" and colliding on the unique constraint.
-    const issue = await this.prisma.$transaction(async (tx) => {
-      const lastIssue = await tx.issue.findFirst({
-        where: { projectId },
-        orderBy: { number: 'desc' },
-        select: { number: true },
-      });
-      const nextNumber = (lastIssue?.number ?? 0) + 1;
+    const issue = await this.prisma.$transaction(
+      async (tx) => {
+        const lastIssue = await tx.issue.findFirst({
+          where: { projectId },
+          orderBy: { number: 'desc' },
+          select: { number: true },
+        });
+        const nextNumber = (lastIssue?.number ?? 0) + 1;
 
-      return tx.issue.create({
-        data: {
-          number: nextNumber,
-          title: dto.title.trim(),
-          description: dto.description?.trim() || null,
-          priority: dto.priority || IssuePriority.NO_PRIORITY,
-          projectId,
-          createdById: userId,
-          assigneeId: dto.assigneeId || null,
-          dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
-        },
-        include: {
-          createdBy: { select: userSelect },
-          assignee: { select: userSelect },
-        },
-      });
-    });
+        // boardOrder: place at the bottom of the backlog by using a large timestamp-based value
+        const lastByOrder = await tx.issue.findFirst({
+          where: { projectId },
+          orderBy: { boardOrder: 'desc' },
+          select: { boardOrder: true },
+        });
+        const boardOrder = (lastByOrder?.boardOrder ?? 0) + 1000;
+
+        return tx.issue.create({
+          data: {
+            number: nextNumber,
+            title: dto.title.trim(),
+            description: dto.description?.trim(),
+            priority: dto.priority || IssuePriority.NO_PRIORITY,
+            boardOrder,
+            projectId,
+            createdById: userId,
+            assigneeId: dto.assigneeId,
+            dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+          },
+          include: {
+            createdBy: { select: userSelect },
+            assignee: { select: userSelect },
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
 
     return this.toIssueDto(issue, project.identifier);
   }
@@ -88,7 +99,7 @@ export class IssuesService {
         createdBy: { select: userSelect },
         assignee: { select: userSelect },
       },
-      orderBy: { number: 'desc' },
+      orderBy: { boardOrder: 'asc' },
     });
 
     return issues.map((issue) => this.toIssueDto(issue, project.identifier));
@@ -158,6 +169,37 @@ export class IssuesService {
     return this.toIssueDto(issue, project.identifier);
   }
 
+  // ── Reorder ─────────────────────────────────────────────────────────────────
+
+  async reorder(
+    orgId: string,
+    projectId: string,
+    number: number,
+    userId: string,
+    dto: ReorderIssueDto,
+  ): Promise<IssueDto> {
+    const project = await this.assertProjectAccess(orgId, projectId, userId);
+
+    const existing = await this.prisma.issue.findUnique({
+      where: { projectId_number: { projectId, number } },
+    });
+    if (!existing) throw new NotFoundException('Issue not found');
+
+    const issue = await this.prisma.issue.update({
+      where: { id: existing.id },
+      data: {
+        boardOrder: dto.boardOrder,
+        ...(dto.status !== undefined && { status: dto.status }),
+      },
+      include: {
+        createdBy: { select: userSelect },
+        assignee: { select: userSelect },
+      },
+    });
+
+    return this.toIssueDto(issue, project.identifier);
+  }
+
   // ── Delete ──────────────────────────────────────────────────────────────────
 
   async delete(
@@ -209,7 +251,9 @@ export class IssuesService {
     const member = await this.prisma.projectMember.findUnique({
       where: { projectId_userId: { projectId, userId } },
     });
-    if (!member) throw new NotFoundException('User is not a project member');
+    if (!member) {
+      throw new NotFoundException('Assignee must be a member of this project');
+    }
   }
 
   private toIssueDto(
@@ -220,6 +264,7 @@ export class IssuesService {
       description: string | null;
       status: string;
       priority: string;
+      boardOrder: number;
       projectId: string;
       createdById: string;
       dueDate: Date | null;
@@ -248,6 +293,7 @@ export class IssuesService {
       description: issue.description,
       status: issue.status as IssueDto['status'],
       priority: issue.priority as IssueDto['priority'],
+      boardOrder: issue.boardOrder,
       projectId: issue.projectId,
       createdById: issue.createdById,
       dueDate: issue.dueDate?.toISOString() ?? null,

@@ -1,10 +1,11 @@
-import {
+import { apiClient } from "@/lib/api-client";
+import type {
   CreateIssuePayload,
   IssueDto,
   IssueFilters,
+  ReorderIssuePayload,
   UpdateIssuePayload,
 } from "@projecthub/types";
-import { apiClient } from "./api-client";
 
 function buildQuery(filters?: IssueFilters): string {
   if (!filters) return "";
@@ -49,6 +50,17 @@ export const issuesApi = {
   ): Promise<IssueDto> =>
     apiClient.patch<IssueDto>(
       `/organizations/${orgId}/projects/${projectId}/issues/${number}`,
+      payload,
+    ),
+
+  reorder: (
+    orgId: string,
+    projectId: string,
+    number: number,
+    payload: ReorderIssuePayload,
+  ): Promise<IssueDto> =>
+    apiClient.patch<IssueDto>(
+      `/organizations/${orgId}/projects/${projectId}/issues/${number}/reorder`,
       payload,
     ),
 

@@ -4,7 +4,9 @@ import { ApiClientError } from "@/lib/api-client";
 import { issuesApi } from "@/lib/issues-api";
 import type {
   CreateIssuePayload,
+  IssueDto,
   IssueFilters,
+  ReorderIssuePayload,
   UpdateIssuePayload,
 } from "@projecthub/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -102,6 +104,57 @@ export function useUpdateIssue(
         );
       }
       toast.error("Failed to update issue");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: issueKeys.all(orgId, projectId),
+      });
+    },
+  });
+}
+
+export function useReorderIssue(orgId: string, projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      number,
+      payload,
+    }: {
+      number: number;
+      payload: ReorderIssuePayload;
+    }) => issuesApi.reorder(orgId, projectId, number, payload),
+    onMutate: async ({ number, payload }) => {
+      await queryClient.cancelQueries({
+        queryKey: issueKeys.all(orgId, projectId),
+      });
+      const listKey = issueKeys.lists(orgId, projectId, undefined);
+      const previous = queryClient.getQueryData(listKey);
+      queryClient.setQueryData(listKey, (old: IssueDto[] | undefined) =>
+        old
+          ? old
+              .map((i) =>
+                i.number === number
+                  ? {
+                      ...i,
+                      boardOrder: payload.boardOrder,
+                      ...(payload.status && { status: payload.status }),
+                    }
+                  : i,
+              )
+              .sort((a, b) => a.boardOrder - b.boardOrder)
+          : old,
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          issueKeys.lists(orgId, projectId, undefined),
+          context.previous,
+        );
+      }
+      toast.error("Failed to reorder issue");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

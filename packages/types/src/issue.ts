@@ -12,6 +12,7 @@ export interface IssueDto {
   description: string | null;
   status: IssueStatus;
   priority: IssuePriority;
+  boardOrder: number;
   projectId: string;
   createdById: string;
   dueDate: string | null;
@@ -48,6 +49,11 @@ export interface UpdateIssuePayload {
   priority?: IssuePriority;
   assigneeId?: string | null;
   dueDate?: string | null;
+}
+
+export interface ReorderIssuePayload {
+  boardOrder: number;
+  status?: IssueStatus;
 }
 
 export interface IssueFilters {

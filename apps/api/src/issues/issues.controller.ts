@@ -17,10 +17,10 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { IssueDto, IssuePriority, IssueStatus } from '@projecthub/types';
-import { type JwtPayload } from '../auth/token.service';
-import { CurrentUser } from '../common';
-import { CreateIssueDto, UpdateIssueDto } from './dto';
+import type { IssueDto, IssuePriority, IssueStatus } from '@projecthub/types';
+import type { JwtPayload } from '../auth/token.service';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { CreateIssueDto, ReorderIssueDto, UpdateIssueDto } from './dto';
 import { IssuesService } from './issues.service';
 
 @ApiTags('Issues')
@@ -85,6 +85,18 @@ export class IssuesController {
     @Body() dto: UpdateIssueDto,
   ): Promise<IssueDto> {
     return this.issuesService.update(orgId, projectId, number, user.sub, dto);
+  }
+
+  @Patch(':number/reorder')
+  @ApiOperation({ summary: 'Reorder an issue within or across columns' })
+  reorder(
+    @Param('orgId') orgId: string,
+    @Param('projectId') projectId: string,
+    @Param('number', ParseIntPipe) number: number,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ReorderIssueDto,
+  ): Promise<IssueDto> {
+    return this.issuesService.reorder(orgId, projectId, number, user.sub, dto);
   }
 
   @Delete(':number')

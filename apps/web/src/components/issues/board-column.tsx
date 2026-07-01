@@ -1,8 +1,12 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useDroppable } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { IssueDto, IssueStatus } from "@projecthub/types";
-import { DragEvent, useState } from "react";
 import { BoardCard } from "./board-card";
 import { getStatusLabel, StatusIcon } from "./status-icon";
 
@@ -11,7 +15,6 @@ interface BoardColumnProps {
   issues: IssueDto[];
   orgSlug: string;
   projectIdentifier: string;
-  onDropIssue: (issueNumber: number, status: IssueStatus) => void;
 }
 
 export function BoardColumn({
@@ -19,33 +22,14 @@ export function BoardColumn({
   issues,
   orgSlug,
   projectIdentifier,
-  onDropIssue,
 }: BoardColumnProps) {
-  const [isDragOver, setIsDragOver] = useState(false);
+  const { setNodeRef, isOver } = useDroppable({ id: status });
 
-  function handleDragOver(e: DragEvent) {
-    e.preventDefault();
-    setIsDragOver(true);
-  }
-
-  function handleDragLeave() {
-    setIsDragOver(false);
-  }
-
-  function handleDrop(e: DragEvent) {
-    e.preventDefault();
-    setIsDragOver(false);
-    const issueNumber = Number(e.dataTransfer.getData("text/issue-number"));
-    if (issueNumber) onDropIssue(issueNumber, status);
-  }
   return (
     <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
       className={cn(
         "flex w-72 shrink-0 flex-col rounded-lg border border-border bg-muted/20 transition-colors",
-        isDragOver && "border-foreground/40 bg-muted/40",
+        isOver && "border-foreground/40 bg-muted/40",
       )}
     >
       <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
@@ -56,16 +40,24 @@ export function BoardColumn({
         <span className="text-xs text-muted-foreground">{issues.length}</span>
       </div>
 
-      <div className="flex min-h-50 flex-col gap-2 overflow-y-auto p-2">
-        {issues.map((issue) => (
-          <BoardCard
-            key={issue.id}
-            issue={issue}
-            orgSlug={orgSlug}
-            projectIdentifier={projectIdentifier}
-          />
-        ))}
-      </div>
+      <SortableContext
+        items={issues.map((i) => i.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div
+          ref={setNodeRef}
+          className="flex min-h-50 flex-col gap-2 overflow-y-auto p-2"
+        >
+          {issues.map((issue) => (
+            <BoardCard
+              key={issue.id}
+              issue={issue}
+              orgSlug={orgSlug}
+              projectIdentifier={projectIdentifier}
+            />
+          ))}
+        </div>
+      </SortableContext>
     </div>
   );
 }
