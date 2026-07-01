@@ -1,5 +1,6 @@
 "use client";
 
+import { CommentThread } from "@/components/comments/comment-thread";
 import {
   getPriorityLabel,
   PRIORITY_OPTIONS,
@@ -153,7 +154,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
 
       <div className="grid grid-cols-[1fr_220px] gap-8">
         {/* Main content */}
-        <div>
+        <div className="min-w-0">
           <Textarea
             value={descDraft}
             onChange={(e) => setDescDraft(e.target.value)}
@@ -162,6 +163,15 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
             rows={8}
             className="border-none bg-transparent px-0 text-sm focus-visible:ring-0"
           />
+
+          {/* Comments */}
+          {org && project && (
+            <CommentThread
+              orgId={org.id}
+              projectId={project.id}
+              issueNumber={issueNumber}
+            />
+          )}
         </div>
 
         {/* Sidebar */}
