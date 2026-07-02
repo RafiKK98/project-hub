@@ -3,9 +3,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MemberRole, Prisma, ProjectMemberRole } from '@prisma/client';
+import {
+  MemberRole,
+  NotificationType,
+  Prisma,
+  ProjectMemberRole,
+} from '@prisma/client';
 import type { CommentDto } from '@projecthub/types';
 import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateCommentDto, UpdateCommentDto } from './dto';
 
 const ORG_ADMIN_ROLES: MemberRole[] = [MemberRole.OWNER, MemberRole.ADMIN];
@@ -19,7 +25,10 @@ const authorSelect = {
 
 @Injectable()
 export class CommentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async create(
     orgId: string,
@@ -44,7 +53,41 @@ export class CommentsService {
       include: { author: { select: authorSelect } },
     });
 
-    return this.toCommentDto(comment, userId, true);
+    // Notify issue assignee if they didn't write the comment
+    if (issue.assigneeId && issue.assigneeId !== userId) {
+      const project = await this.prisma.project.findUnique({
+        where: { id: projectId },
+      });
+      const org = await this.prisma.organization.findUnique({
+        where: { id: orgId },
+      });
+      const issueKey = `${project?.identifier}-${issue.number}`;
+
+      await this.notificationsService.createNotification({
+        userId: issue.assigneeId,
+        type: NotificationType.COMMENT_ADDED,
+        title: 'New comment on your issue',
+        body: `${comment.author.name ?? comment.author.email} commented on ${issueKey}: "${dto.body.slice(0, 80)}${dto.body.length > 80 ? '…' : ''}"`,
+        payload: {
+          issueId: issue.id,
+          issueKey,
+          issueTitle: issue.title,
+          commentId: comment.id,
+          commentSnippet: dto.body.slice(0, 120),
+          projectId,
+          orgSlug: org?.slug ?? '',
+          projectIdentifier: project?.identifier ?? '',
+          issueNumber: issue.number,
+        },
+      });
+    }
+
+    const canDeleteAny = await this.canDeleteAnyComment(
+      orgId,
+      projectId,
+      userId,
+    );
+    return this.toCommentDto(comment, userId, canDeleteAny);
   }
 
   async findAllForIssue(

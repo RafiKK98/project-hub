@@ -3,9 +3,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { IssuePriority, MemberRole, Prisma } from '@prisma/client';
+import {
+  IssuePriority,
+  MemberRole,
+  NotificationType,
+  Prisma,
+} from '@prisma/client';
 import { IssueDto, IssueFilters } from '@projecthub/types';
 import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateIssueDto, ReorderIssueDto, UpdateIssueDto } from './dto';
 
 const ORG_ADMIN_ROLES: MemberRole[] = [MemberRole.ADMIN, MemberRole.OWNER];
@@ -19,7 +25,10 @@ const userSelect = {
 
 @Injectable()
 export class IssuesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   // ── Create ──────────────────────────────────────────────────────────────────
 
@@ -44,7 +53,6 @@ export class IssuesService {
         });
         const nextNumber = (lastIssue?.number ?? 0) + 1;
 
-        // boardOrder: place at the bottom of the backlog by using a large timestamp-based value
         const lastByOrder = await tx.issue.findFirst({
           where: { projectId },
           orderBy: { boardOrder: 'desc' },
@@ -72,6 +80,27 @@ export class IssuesService {
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
+
+    // Notify assignee if set and not self-assigned
+    if (issue.assigneeId && issue.assigneeId !== userId) {
+      const org = await this.prisma.organization.findFirst({
+        where: { id: project.organizationId },
+      });
+      await this.notificationsService.createNotification({
+        userId: issue.assigneeId,
+        type: NotificationType.ISSUE_ASSIGNED,
+        title: 'Issue assigned to you',
+        body: `${issue.createdBy.name ?? issue.createdBy.email} assigned ${project.identifier}-${issue.number} to you`,
+        payload: {
+          issueId: issue.id,
+          issueKey: `${project.identifier}-${issue.number}`,
+          issueTitle: issue.title,
+          projectId,
+          orgSlug: org?.slug ?? '',
+          projectIdentifier: project.identifier,
+        },
+      });
+    }
 
     return this.toIssueDto(issue, project.identifier);
   }
@@ -139,6 +168,10 @@ export class IssuesService {
 
     const existing = await this.prisma.issue.findUnique({
       where: { projectId_number: { projectId, number } },
+      include: {
+        createdBy: { select: userSelect },
+        assignee: { select: userSelect },
+      },
     });
     if (!existing) throw new NotFoundException('Issue not found');
 
@@ -165,6 +198,58 @@ export class IssuesService {
         assignee: { select: userSelect },
       },
     });
+
+    const org = await this.prisma.organization.findFirst({
+      where: { id: project.organizationId },
+    });
+    const issueKey = `${project.identifier}-${issue.number}`;
+
+    // Notify new assignee (if changed and not self-assigned)
+    if (
+      dto.assigneeId &&
+      dto.assigneeId !== existing.assigneeId &&
+      dto.assigneeId !== userId
+    ) {
+      await this.notificationsService.createNotification({
+        userId: dto.assigneeId,
+        type: NotificationType.ISSUE_ASSIGNED,
+        title: 'Issue assigned to you',
+        body: `${existing.createdBy.name ?? existing.createdBy.email} assigned ${issueKey} to you`,
+        payload: {
+          issueId: issue.id,
+          issueKey,
+          issueTitle: issue.title,
+          projectId,
+          orgSlug: org?.slug ?? '',
+          projectIdentifier: project.identifier,
+        },
+      });
+    }
+
+    // Notify assignee of status change (if assigned, status changed, and not self-update)
+    if (
+      dto.status &&
+      dto.status !== existing.status &&
+      existing.assigneeId &&
+      existing.assigneeId !== userId
+    ) {
+      await this.notificationsService.createNotification({
+        userId: existing.assigneeId,
+        type: NotificationType.ISSUE_STATUS_CHANGED,
+        title: 'Issue status updated',
+        body: `${issueKey} moved from ${existing.status} to ${dto.status}`,
+        payload: {
+          issueId: issue.id,
+          issueKey,
+          issueTitle: issue.title,
+          oldStatus: existing.status,
+          newStatus: dto.status,
+          projectId,
+          orgSlug: org?.slug ?? '',
+          projectIdentifier: project.identifier,
+        },
+      });
+    }
 
     return this.toIssueDto(issue, project.identifier);
   }

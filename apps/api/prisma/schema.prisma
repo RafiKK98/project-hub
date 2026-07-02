@@ -41,6 +41,7 @@ model User {
   issuesCreated      Issue[]             @relation("IssuesCreated")
   issuesAssigned     Issue[]             @relation("IssuesAssigned")
   commentsAuthored   Comment[]           @relation("CommentsAuthored")
+  notifications      Notification[]      @relation("NotificationsReceived")
 
   @@index([email])
   @@map("users")
@@ -295,4 +296,33 @@ model Comment {
   @@index([issueId])
   @@index([authorId])
   @@map("comments")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 9 — Notifications
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum NotificationType {
+  ISSUE_ASSIGNED
+  ISSUE_STATUS_CHANGED
+  COMMENT_ADDED
+  MEMBER_INVITED
+  MEMBER_JOINED
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String // recipient
+  type      NotificationType
+  title     String
+  body      String
+  payload   Json // type-specific structured data
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation("NotificationsReceived", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
