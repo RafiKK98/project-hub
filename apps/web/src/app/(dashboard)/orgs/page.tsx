@@ -3,13 +3,11 @@
 import { RoleBadge } from "@/components/organizations/role-badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { Building2, Plus } from "lucide-react";
 import Link from "next/link";
 
 export default function OrgsPage() {
-  const { logout } = useAuth();
   const { data: orgs, isLoading } = useOrganizations();
 
   return (
@@ -29,7 +27,6 @@ export default function OrgsPage() {
             New organization
           </Button>
         </Link>
-        <Button onClick={logout}>Logout</Button>
       </div>
 
       {isLoading ? (
