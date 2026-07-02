@@ -1,11 +1,13 @@
 "use client";
 
 import { IssueBoard } from "@/components/issues/issue-board";
+import { IssueFilterBar } from "@/components/issues/issue-filter-bar";
 import { IssueListGrouped } from "@/components/issues/issue-list-grouped";
 import { ViewToggle, type IssueView } from "@/components/issues/view-toggle";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { applyIssueFilters, useIssueFilters } from "@/hooks/use-issue-filters";
 import { useIssues, useReorderIssue } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
@@ -15,7 +17,7 @@ import {
 import type { IssueStatus } from "@projecthub/types";
 import { ArrowLeft, ListTodo, Plus, Settings, Users } from "lucide-react";
 import Link from "next/link";
-import { use, useCallback, useState } from "react";
+import { Suspense, use, useCallback, useState } from "react";
 
 interface ProjectPageProps {
   params: Promise<{ slug: string; identifier: string }>;
@@ -23,9 +25,15 @@ interface ProjectPageProps {
 
 const MANAGER_ROLES = ["MANAGER"];
 
-export default function ProjectPage({ params }: ProjectPageProps) {
-  const { slug, identifier } = use(params);
+function ProjectPageInner({
+  slug,
+  identifier,
+}: {
+  slug: string;
+  identifier: string;
+}) {
   const [view, setView] = useState<IssueView>("board");
+  const { filters, hasActiveFilters } = useIssueFilters();
 
   const { data: org } = useOrganization(slug);
   const { data: project, isLoading } = useProjectByIdentifier(
@@ -41,6 +49,9 @@ export default function ProjectPage({ params }: ProjectPageProps) {
 
   const canManage =
     project && MANAGER_ROLES.includes(project.currentUserRole ?? "");
+
+  // Apply client-side filters over the cached issue list
+  const filteredIssues = issues ? applyIssueFilters(issues, filters) : [];
 
   const handleReorder = useCallback(
     (issueNumber: number, newBoardOrder: number, newStatus: IssueStatus) => {
@@ -110,7 +121,6 @@ export default function ProjectPage({ params }: ProjectPageProps) {
             </p>
           </div>
         </div>
-
         {canManage && (
           <Link href={`/orgs/${slug}/projects/${identifier}/settings`}>
             <Button variant="outline" size="sm">
@@ -121,12 +131,15 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         )}
       </div>
 
-      {/* Issues */}
+      {/* Issues section */}
       <section className="mb-10">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        {/* Toolbar row */}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <p className="text-sm text-muted-foreground">
-              {issues?.length ?? 0} {issues?.length === 1 ? "issue" : "issues"}
+              {hasActiveFilters
+                ? `${filteredIssues.length} of ${issues?.length ?? 0} issues`
+                : `${issues?.length ?? 0} ${issues?.length === 1 ? "issue" : "issues"}`}
             </p>
             <ViewToggle view={view} onChange={setView} />
           </div>
@@ -138,6 +151,12 @@ export default function ProjectPage({ params }: ProjectPageProps) {
           </Link>
         </div>
 
+        {/* Filter bar */}
+        <div className="mb-4">
+          <IssueFilterBar members={members!} />
+        </div>
+
+        {/* Issue list / board */}
         {issuesLoading ? (
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
@@ -165,16 +184,25 @@ export default function ProjectPage({ params }: ProjectPageProps) {
               </Button>
             </Link>
           </div>
+        ) : filteredIssues.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border py-12 text-center">
+            <p className="text-sm font-medium text-foreground">
+              No issues match your filters
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Try adjusting or clearing the active filters
+            </p>
+          </div>
         ) : view === "board" ? (
           <IssueBoard
-            issues={issues ?? []}
+            issues={filteredIssues}
             orgSlug={slug}
             projectIdentifier={identifier}
             onReorder={handleReorder}
           />
         ) : (
           <IssueListGrouped
-            issues={issues ?? []}
+            issues={filteredIssues}
             orgSlug={slug}
             projectIdentifier={identifier}
           />
@@ -209,5 +237,21 @@ export default function ProjectPage({ params }: ProjectPageProps) {
         </div>
       </section>
     </div>
+  );
+}
+
+// Suspense boundary required because useSearchParams() needs it in Next.js App Router
+export default function ProjectPage({ params }: ProjectPageProps) {
+  const { slug, identifier } = use(params);
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-5xl px-4 py-12">
+          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+        </div>
+      }
+    >
+      <ProjectPageInner slug={slug} identifier={identifier} />
+    </Suspense>
   );
 }
