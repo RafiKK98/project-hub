@@ -10,13 +10,14 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
+import type {
   InvitationDto,
   MembershipDto,
   OrganizationDto,
 } from '@projecthub/types';
 import type { JwtPayload } from '../auth/token.service';
-import { CurrentUser } from '../common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import {
   CreateOrganizationDto,
   InviteMemberDto,
@@ -151,5 +152,25 @@ export class OrganizationsController {
       user.sub,
       invitationId,
     );
+  }
+
+  // ── Invitation acceptance (no org ID needed — uses invitation ID directly) ──
+
+  @Get('invitations/:invitationId')
+  @Public()
+  @ApiOperation({
+    summary: 'Get invitation details (public — for the accept page)',
+  })
+  getInvitationDetails(@Param('invitationId') invitationId: string) {
+    return this.organizationsService.getInvitationDetails(invitationId);
+  }
+
+  @Post('invitations/:invitationId/accept')
+  @ApiOperation({ summary: 'Accept an invitation and join the organization' })
+  acceptInvitation(
+    @Param('invitationId') invitationId: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<OrganizationDto> {
+    return this.organizationsService.acceptInvitation(invitationId, user.sub);
   }
 }

@@ -5,14 +5,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MemberRole } from '@prisma/client';
-import {
+import { MemberRole, NotificationType } from '@prisma/client';
+import type {
   InvitationDto,
   MembershipDto,
   OrganizationDto,
 } from '@projecthub/types';
 import { slugify } from '@projecthub/utils';
 import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   CreateOrganizationDto,
   InviteMemberDto,
@@ -20,17 +21,20 @@ import {
   UpdateOrganizationDto,
 } from './dto';
 
+// Roles that are allowed to manage the organization
 const MANAGER_ROLES: MemberRole[] = [
   MemberRole.OWNER,
   MemberRole.ADMIN,
   MemberRole.MANAGER,
 ];
-
 const ADMIN_ROLES: MemberRole[] = [MemberRole.OWNER, MemberRole.ADMIN];
 
 @Injectable()
 export class OrganizationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   // ── Create ──────────────────────────────────────────────────────────────────
 
@@ -44,7 +48,7 @@ export class OrganizationsService {
       data: {
         name: dto.name.trim(),
         slug,
-        description: dto.description?.trim() || null,
+        description: dto.description?.trim(),
         memberships: {
           create: {
             userId,
@@ -75,11 +79,11 @@ export class OrganizationsService {
       orderBy: { createdAt: 'asc' },
     });
 
-    return memberships.map((membership) =>
+    return memberships.map((m) =>
       this.toOrganizationDto(
-        membership.organization,
-        membership.organization._count.memberships,
-        membership.role,
+        m.organization,
+        m.organization._count.memberships,
+        m.role,
       ),
     );
   }
@@ -152,11 +156,11 @@ export class OrganizationsService {
       orderBy: { createdAt: 'asc' },
     });
 
-    return memberships.map((membership) => ({
-      id: membership.id,
-      role: membership.role,
-      createdAt: membership.createdAt.toISOString(),
-      user: membership.user,
+    return memberships.map((m) => ({
+      id: m.id,
+      role: m.role,
+      createdAt: m.createdAt.toISOString(),
+      user: m.user,
     }));
   }
 
@@ -169,8 +173,9 @@ export class OrganizationsService {
     await this.assertRole(orgId, requestingUserId, ADMIN_ROLES);
 
     // Prevent demoting the last owner
-    if (dto.role !== MemberRole.OWNER)
+    if (dto.role !== MemberRole.OWNER) {
       await this.assertNotLastOwner(orgId, targetUserId);
+    }
 
     const membership = await this.prisma.membership.update({
       where: {
@@ -186,7 +191,7 @@ export class OrganizationsService {
 
     return {
       id: membership.id,
-      role: membership.role as MembershipDto['role'],
+      role: membership.role,
       createdAt: membership.createdAt.toISOString(),
       user: membership.user,
     };
@@ -246,11 +251,10 @@ export class OrganizationsService {
         email_organizationId: { email: dto.email, organizationId: orgId },
       },
     });
-    if (existingInvite && existingInvite.status === 'PENDING') {
+    if (existingInvite && existingInvite.status === 'PENDING')
       throw new ConflictException(
         'A pending invitation already exists for this email',
       );
-    }
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
@@ -274,14 +278,35 @@ export class OrganizationsService {
       },
       include: {
         invitedBy: { select: { id: true, name: true, email: true } },
+        organization: true,
       },
     });
+
+    // If the invited email belongs to an existing user, send them an in-app notification
+    const invitedUser = await this.prisma.user.findUnique({
+      where: { email: dto.email.toLowerCase().trim() },
+    });
+    if (invitedUser) {
+      await this.notificationsService.createNotification({
+        userId: invitedUser.id,
+        type: NotificationType.MEMBER_INVITED,
+        title: 'You have been invited to an organization',
+        body: `${invitation.invitedBy.name ?? invitation.invitedBy.email} invited you to join ${invitation.organization.name}`,
+        payload: {
+          organizationId: orgId,
+          organizationName: invitation.organization.name,
+          orgSlug: invitation.organization.slug,
+          invitedByName:
+            invitation.invitedBy.name ?? invitation.invitedBy.email,
+        },
+      });
+    }
 
     return {
       id: invitation.id,
       email: invitation.email,
-      role: invitation.role as InvitationDto['role'],
-      status: invitation.status as InvitationDto['status'],
+      role: invitation.role,
+      status: invitation.status,
       expiresAt: invitation.expiresAt.toISOString(),
       createdAt: invitation.createdAt.toISOString(),
       invitedBy: invitation.invitedBy,
@@ -303,8 +328,8 @@ export class OrganizationsService {
     return invitations.map((inv) => ({
       id: inv.id,
       email: inv.email,
-      role: inv.role as InvitationDto['role'],
-      status: inv.status as InvitationDto['status'],
+      role: inv.role,
+      status: inv.status,
       expiresAt: inv.expiresAt.toISOString(),
       createdAt: inv.createdAt.toISOString(),
       invitedBy: inv.invitedBy,
@@ -326,13 +351,111 @@ export class OrganizationsService {
     await this.prisma.invitation.delete({ where: { id: invitationId } });
   }
 
+  async acceptInvitation(
+    invitationId: string,
+    userId: string,
+  ): Promise<OrganizationDto> {
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { id: invitationId },
+      include: {
+        organization: {
+          include: { _count: { select: { memberships: true } } },
+        },
+      },
+    });
+
+    if (!invitation) throw new NotFoundException('Invitation not found');
+    if (invitation.status !== 'PENDING')
+      throw new BadRequestException(
+        'This invitation has already been used or expired',
+      );
+
+    if (invitation.expiresAt < new Date()) {
+      await this.prisma.invitation.update({
+        where: { id: invitationId },
+        data: { status: 'EXPIRED' },
+      });
+      throw new BadRequestException('This invitation has expired');
+    }
+
+    // Check the accepting user's email matches the invitation
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.email.toLowerCase() !== invitation.email.toLowerCase())
+      throw new ForbiddenException(
+        'This invitation was sent to a different email address',
+      );
+
+    // Check not already a member
+    const existing = await this.prisma.membership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId: invitation.organizationId,
+        },
+      },
+    });
+    if (existing)
+      throw new ConflictException(
+        'You are already a member of this organization',
+      );
+
+    // Accept: create membership and update invitation status
+    await this.prisma.$transaction([
+      this.prisma.membership.create({
+        data: {
+          userId,
+          organizationId: invitation.organizationId,
+          role: invitation.role,
+        },
+      }),
+      this.prisma.invitation.update({
+        where: { id: invitationId },
+        data: { status: 'ACCEPTED' },
+      }),
+    ]);
+
+    const org = invitation.organization;
+    return this.toOrganizationDto(
+      org,
+      org._count.memberships + 1,
+      invitation.role,
+    );
+  }
+
+  async getInvitationDetails(invitationId: string): Promise<{
+    id: string;
+    email: string;
+    role: string;
+    organizationName: string;
+    orgSlug: string;
+    expiresAt: string;
+    status: string;
+  }> {
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { id: invitationId },
+      include: { organization: true },
+    });
+    if (!invitation) throw new NotFoundException('Invitation not found');
+
+    return {
+      id: invitation.id,
+      email: invitation.email,
+      role: invitation.role,
+      organizationName: invitation.organization.name,
+      orgSlug: invitation.organization.slug,
+      expiresAt: invitation.expiresAt.toISOString(),
+      status: invitation.status,
+    };
+  }
+
   // ── Private helpers ─────────────────────────────────────────────────────────
 
   private async assertMember(orgId: string, userId: string) {
     const membership = await this.prisma.membership.findUnique({
       where: { userId_organizationId: { userId, organizationId: orgId } },
     });
-    if (!membership) throw new NotFoundException('Member not found');
+    if (!membership) throw new NotFoundException('Organization not found');
     return membership;
   }
 
@@ -344,7 +467,7 @@ export class OrganizationsService {
     const membership = await this.assertMember(orgId, userId);
     if (!allowedRoles.includes(membership.role))
       throw new ForbiddenException(
-        'You do not have permission to perform this action.',
+        'You do not have permission to perform this action',
       );
 
     return membership;
@@ -377,6 +500,7 @@ export class OrganizationsService {
       slug = `${base}-${attempt}`;
     }
   }
+
   private toOrganizationDto(
     org: {
       id: string;
@@ -398,7 +522,7 @@ export class OrganizationsService {
       avatarUrl: org.avatarUrl,
       createdAt: org.createdAt.toISOString(),
       memberCount,
-      currentUserRole: currentUserRole as OrganizationDto['currentUserRole'],
+      currentUserRole,
     };
   }
 }

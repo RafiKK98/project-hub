@@ -361,6 +361,29 @@ export default function OrgPage({ params }: OrgPageProps) {
                         Invited by {inv.invitedBy.name ?? inv.invitedBy.email} ·
                         Expires {new Date(inv.expiresAt).toLocaleDateString()}
                       </p>
+                      <button
+                        onClick={() => {
+                          const link = `${window.location.origin}/invitations/${inv.id}`;
+                          navigator.clipboard
+                            .writeText(link)
+                            .then(() => {
+                              const btn = document.getElementById(
+                                `copy-${inv.id}`,
+                              );
+                              if (btn) {
+                                btn.textContent = "Copied!";
+                                setTimeout(() => {
+                                  if (btn) btn.textContent = "Copy invite link";
+                                }, 2000);
+                              }
+                            })
+                            .catch(() => {});
+                        }}
+                        id={`copy-${inv.id}`}
+                        className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                      >
+                        Copy invite link
+                      </button>
                     </div>
                     <Badge variant="warning">Pending</Badge>
                     <RoleBadge role={inv.role} />

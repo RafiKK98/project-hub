@@ -2,24 +2,27 @@
 
 import { ApiClientError } from "@/lib/api-client";
 import { authApi } from "@/lib/auth-api";
-import {
+import type {
   LoginFormValues,
   RegisterFormValues,
 } from "@/lib/validations/auth.schema";
 import { useAuthStore } from "@/store/auth.store";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export function useAuth() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, tokens, isAuthenticated, setSession, clearSession } =
     useAuthStore();
 
   async function login(values: LoginFormValues): Promise<boolean> {
     try {
       const { user, tokens } = await authApi.login(values);
+      // Clear any previous user's cached data before setting the new session
+      queryClient.clear();
       setSession(user, tokens);
-      // Set cookie for middleware to read
       document.cookie = `ph-access-token=${tokens.accessToken}; path=/; max-age=${15 * 60}; SameSite=Strict`;
       router.push("/orgs");
       toast.success(`Welcome back, ${user.name ?? user.email}`);
@@ -37,6 +40,7 @@ export function useAuth() {
   async function register(values: RegisterFormValues): Promise<boolean> {
     try {
       const { user, tokens } = await authApi.register(values);
+      queryClient.clear();
       setSession(user, tokens);
       document.cookie = `ph-access-token=${tokens.accessToken}; path=/; max-age=${15 * 60}; SameSite=Strict`;
       router.push("/orgs");
@@ -58,6 +62,8 @@ export function useAuth() {
     } catch {
       // Always clear local session even if the API call fails
     } finally {
+      // Clear ALL cached query data so the next user starts fresh
+      queryClient.clear();
       clearSession();
       document.cookie = "ph-access-token=; path=/; max-age=0";
       router.push("/login");
