@@ -90,10 +90,41 @@ export function useUpdateIssue(
       const previous = queryClient.getQueryData(
         issueKeys.detail(orgId, projectId, number),
       );
+
       queryClient.setQueryData(
         issueKeys.detail(orgId, projectId, number),
-        (old: typeof previous) => (old ? { ...old, ...payload } : old),
+        (old: IssueDto | undefined) => {
+          if (!old) return old;
+
+          // When assigneeId changes, resolve the full assignee object from the
+          // project members cache so the UI updates without waiting for the server.
+          let optimisticAssignee = old.assignee;
+          if ("assigneeId" in payload) {
+            if (!payload.assigneeId) {
+              optimisticAssignee = null;
+            } else if (payload.assigneeId !== old.assignee?.id) {
+              const allCacheEntries = queryClient.getQueriesData<
+                { user: IssueDto["assignee"] }[]
+              >({
+                queryKey: ["projects", orgId, projectId, "members"],
+              });
+              for (const [, data] of allCacheEntries) {
+                if (!Array.isArray(data)) continue;
+                const found = data.find(
+                  (m) => m.user?.id === payload.assigneeId,
+                );
+                if (found?.user) {
+                  optimisticAssignee = found.user;
+                  break;
+                }
+              }
+            }
+          }
+
+          return { ...old, ...payload, assignee: optimisticAssignee };
+        },
       );
+
       return { previous };
     },
     onError: (_err, _payload, context) => {

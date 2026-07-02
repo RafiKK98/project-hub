@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { NotificationDto, NotificationType } from "@projecthub/types";
+import type { NotificationDto, NotificationType } from "@projecthub/types";
 import { CircleDot, GitBranch, MessageSquare, UserPlus } from "lucide-react";
 import Link from "next/link";
 
@@ -47,7 +47,12 @@ function getNotificationHref(notification: NotificationDto): string | null {
       }
       return null;
     }
-    case "MEMBER_INVITED":
+    case "MEMBER_INVITED": {
+      const payload = p as { invitationId: string };
+      return payload.invitationId
+        ? `/invitations/${payload.invitationId}`
+        : null;
+    }
     case "MEMBER_JOINED": {
       const payload = p as { orgSlug: string };
       return payload.orgSlug ? `/orgs/${payload.orgSlug}` : null;

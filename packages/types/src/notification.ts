@@ -40,6 +40,7 @@ export interface CommentAddedPayload {
 }
 
 export interface MemberInvitedPayload {
+  invitationId: string;
   organizationId: string;
   organizationName: string;
   orgSlug: string;

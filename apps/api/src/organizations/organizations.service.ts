@@ -251,10 +251,11 @@ export class OrganizationsService {
         email_organizationId: { email: dto.email, organizationId: orgId },
       },
     });
-    if (existingInvite && existingInvite.status === 'PENDING')
+    if (existingInvite && existingInvite.status === 'PENDING') {
       throw new ConflictException(
         'A pending invitation already exists for this email',
       );
+    }
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
@@ -293,6 +294,7 @@ export class OrganizationsService {
         title: 'You have been invited to an organization',
         body: `${invitation.invitedBy.name ?? invitation.invitedBy.email} invited you to join ${invitation.organization.name}`,
         payload: {
+          invitationId: invitation.id,
           organizationId: orgId,
           organizationName: invitation.organization.name,
           orgSlug: invitation.organization.slug,
@@ -365,11 +367,11 @@ export class OrganizationsService {
     });
 
     if (!invitation) throw new NotFoundException('Invitation not found');
-    if (invitation.status !== 'PENDING')
+    if (invitation.status !== 'PENDING') {
       throw new BadRequestException(
         'This invitation has already been used or expired',
       );
-
+    }
     if (invitation.expiresAt < new Date()) {
       await this.prisma.invitation.update({
         where: { id: invitationId },
@@ -381,10 +383,11 @@ export class OrganizationsService {
     // Check the accepting user's email matches the invitation
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
-    if (user.email.toLowerCase() !== invitation.email.toLowerCase())
+    if (user.email.toLowerCase() !== invitation.email.toLowerCase()) {
       throw new ForbiddenException(
         'This invitation was sent to a different email address',
       );
+    }
 
     // Check not already a member
     const existing = await this.prisma.membership.findUnique({
@@ -465,11 +468,11 @@ export class OrganizationsService {
     allowedRoles: MemberRole[],
   ) {
     const membership = await this.assertMember(orgId, userId);
-    if (!allowedRoles.includes(membership.role))
+    if (!allowedRoles.includes(membership.role)) {
       throw new ForbiddenException(
         'You do not have permission to perform this action',
       );
-
+    }
     return membership;
   }
 
@@ -480,10 +483,11 @@ export class OrganizationsService {
     const isOwner = await this.prisma.membership.findFirst({
       where: { organizationId: orgId, userId, role: MemberRole.OWNER },
     });
-    if (isOwner && ownerCount <= 1)
+    if (isOwner && ownerCount <= 1) {
       throw new BadRequestException(
         'Cannot remove the last owner. Transfer ownership before leaving.',
       );
+    }
   }
 
   private async generateUniqueSlug(name: string): Promise<string> {
@@ -522,7 +526,7 @@ export class OrganizationsService {
       avatarUrl: org.avatarUrl,
       createdAt: org.createdAt.toISOString(),
       memberCount,
-      currentUserRole,
+      currentUserRole: currentUserRole,
     };
   }
 }
