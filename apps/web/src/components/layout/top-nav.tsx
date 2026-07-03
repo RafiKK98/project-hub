@@ -39,7 +39,10 @@ export function TopNav() {
     <header className="sticky top-0 z-40 flex h-12 items-center border-b border-border bg-background/95 px-4 backdrop-blur-sm">
       {/* Left — logo + current org breadcrumb */}
       <div className="flex flex-1 items-center gap-3">
-        <Link href="/orgs" className="flex items-center gap-2 text-foreground">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 text-foreground"
+        >
           <div className="flex h-6 w-6 items-center justify-center rounded bg-foreground">
             <span className="text-xs font-bold text-background">P</span>
           </div>

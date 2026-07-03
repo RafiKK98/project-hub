@@ -1,8 +1,8 @@
 "use client";
 
-import { IssueBoard } from "@/components/issues/issue-board";
 import { IssueFilterBar } from "@/components/issues/issue-filter-bar";
 import { IssueListGrouped } from "@/components/issues/issue-list-grouped";
+import { LazyIssueBoard } from "@/components/issues/lazy-issue-board";
 import { ViewToggle, type IssueView } from "@/components/issues/view-toggle";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -194,7 +194,7 @@ function ProjectPageInner({
             </p>
           </div>
         ) : view === "board" ? (
-          <IssueBoard
+          <LazyIssueBoard
             issues={filteredIssues}
             orgSlug={slug}
             projectIdentifier={identifier}
