@@ -1,17 +1,17 @@
 "use client";
 
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { Avatar } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth.store";
-import { Building2, ChevronDown, LogOut } from "lucide-react";
+import { BarChart3, Building2, ChevronDown, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { NotificationBell } from "../notifications/notification-bell";
-import { Avatar } from "../ui/avatar";
 
-export default function TopNav() {
+export function TopNav() {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const { logout } = useAuth();
@@ -74,7 +74,7 @@ export default function TopNav() {
               userMenuOpen && "bg-muted text-foreground",
             )}
           >
-            <Avatar name={user?.name! ?? user?.email!} size="sm" />
+            <Avatar name={user?.name! ?? user?.email} size="sm" />
             <ChevronDown className="h-3 w-3" />
           </button>
 
@@ -90,6 +90,14 @@ export default function TopNav() {
 
               {/* Menu items */}
               <div className="py-1">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="flex items-center gap-2.5 px-4 py-2 text-sm text-foreground hover:bg-muted"
+                >
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  Dashboard
+                </Link>
                 <Link
                   href="/orgs"
                   onClick={() => setUserMenuOpen(false)}

@@ -1,6 +1,7 @@
 export * from "./api";
 export * from "./auth";
 export * from "./comment";
+export * from "./dashboard";
 export * from "./health";
 export * from "./issue";
 export * from "./notification";

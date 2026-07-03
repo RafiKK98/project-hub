@@ -24,7 +24,7 @@ export function useAuth() {
       queryClient.clear();
       setSession(user, tokens);
       document.cookie = `ph-access-token=${tokens.accessToken}; path=/; max-age=${15 * 60}; SameSite=Strict`;
-      router.push("/orgs");
+      router.push("/dashboard");
       toast.success(`Welcome back, ${user.name ?? user.email}`);
       return true;
     } catch (error) {
@@ -43,7 +43,7 @@ export function useAuth() {
       queryClient.clear();
       setSession(user, tokens);
       document.cookie = `ph-access-token=${tokens.accessToken}; path=/; max-age=${15 * 60}; SameSite=Strict`;
-      router.push("/orgs");
+      router.push("/dashboard");
       toast.success(`Welcome to ProjectHub, ${user.name}!`);
       return true;
     } catch (error) {

@@ -40,9 +40,8 @@ export function proxy(request: NextRequest): NextResponse {
   }
 
   // Redirect authenticated users away from auth pages
-  if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL("/orgs", request.url));
-  }
+  if (isAuthRoute && isAuthenticated)
+    return NextResponse.redirect(new URL("/dashboard", request.url));
 
   return NextResponse.next();
 }

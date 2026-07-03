@@ -1,4 +1,4 @@
-import TopNav from "@/components/layout/top-nav";
+import { TopNav } from "@/components/layout/top-nav";
 import { type ReactNode } from "react";
 
 interface DashboardLayoutProps {
