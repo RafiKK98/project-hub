@@ -17,6 +17,10 @@
     "type-check": {
       "dependsOn": ["^type-check"]
     },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "test/**"]
+    },
     "clean": {
       "cache": false
     }

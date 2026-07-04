@@ -1,6 +1,7 @@
 {
   "extends": "@projecthub/config/typescript/nestjs",
   "compilerOptions": {
+    "types": ["jest", "node"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
