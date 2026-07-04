@@ -1,15 +1,15 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import jest from 'jest';
 import { AuthService } from '../auth/auth.service';
 import { TokenService } from '../auth/token.service';
 import { PrismaService } from '../database/prisma.service';
 import {
   createPrismaMock,
-  MockPrisma,
   resetPrismaMock,
+  type MockPrisma,
 } from '../test/prisma.mock';
 import { UsersService } from '../users/users.service';
 
@@ -31,6 +31,19 @@ const mockTokens = {
   refreshToken: 'family-uuid.raw-token-uuid',
 };
 
+const mockAccount = {
+  id: 'account-1',
+  userId: 'user-1',
+  provider: 'local',
+  providerAccountId: 'jane@example.com',
+  passwordHash: '', // filled per-test
+  accessToken: null,
+  refreshToken: null,
+  expiresAt: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('AuthService', () => {
@@ -38,10 +51,16 @@ describe('AuthService', () => {
   let prisma: MockPrisma;
 
   const mockTokenService = {
-    issueTokens: jest.fn().mockResolvedValue(mockTokens),
+    issueTokens: jest
+      .fn<() => Promise<typeof mockTokens>>()
+      .mockResolvedValue(mockTokens),
     rotateRefreshToken: jest.fn(),
-    revokeAllUserTokens: jest.fn(),
-    signAccessToken: jest.fn().mockReturnValue('access-token-123'),
+    revokeAllUserTokens: jest
+      .fn<(userId: string) => Promise<void>>()
+      .mockResolvedValue(undefined),
+    signAccessToken: jest
+      .fn<() => string>()
+      .mockReturnValue('access-token-123'),
   };
 
   beforeEach(async () => {
@@ -59,13 +78,17 @@ describe('AuthService', () => {
     authService = module.get<AuthService>(AuthService);
     jest.clearAllMocks();
     resetPrismaMock(prisma);
+    // Re-apply default implementations after reset
+    mockTokenService.issueTokens.mockResolvedValue(mockTokens);
+    mockTokenService.revokeAllUserTokens.mockResolvedValue(undefined);
+    mockTokenService.signAccessToken.mockReturnValue('access-token-123');
   });
 
   // ── register ───────────────────────────────────────────────────────────────
 
   describe('register', () => {
     it('creates a new user and returns tokens', async () => {
-      prisma.user.findUnique.mockResolvedValue(null); // email available
+      prisma.user.findUnique.mockResolvedValue(null);
       prisma.user.create.mockResolvedValue(mockUser);
 
       const result = await authService.register({
@@ -80,7 +103,7 @@ describe('AuthService', () => {
     });
 
     it('throws ConflictException when email is already registered', async () => {
-      prisma.user.findUnique.mockResolvedValue(mockUser); // email taken
+      prisma.user.findUnique.mockResolvedValue(mockUser);
 
       await expect(
         authService.register({
@@ -104,13 +127,20 @@ describe('AuthService', () => {
       });
 
       const createCall = prisma.user.create.mock.calls[0]?.[0];
-      const passwordHash = createCall?.data?.accounts?.create?.passwordHash as
-        string | undefined;
+      // Navigate through the Prisma nested create structure safely
+      const accountsInput = createCall?.data?.accounts as
+        | {
+            create?:
+              { passwordHash?: string } | Array<{ passwordHash?: string }>;
+          }
+        | undefined;
+      const createInput = accountsInput?.create;
+      const passwordHash = Array.isArray(createInput)
+        ? createInput[0]?.passwordHash
+        : createInput?.passwordHash;
 
       expect(passwordHash).toBeDefined();
       expect(passwordHash).not.toBe('SecurePass123!');
-      expect(typeof passwordHash).toBe('string');
-      // Verify it's a valid bcrypt hash
       const isHash = await bcrypt.compare('SecurePass123!', passwordHash ?? '');
       expect(isHash).toBe(true);
     });
@@ -123,16 +153,8 @@ describe('AuthService', () => {
       const passwordHash = await bcrypt.hash('SecurePass123!', 10);
       prisma.user.findUnique.mockResolvedValue(mockUser);
       prisma.account.findUnique.mockResolvedValue({
-        id: 'account-1',
-        userId: 'user-1',
-        provider: 'local',
-        providerAccountId: 'jane@example.com',
+        ...mockAccount,
         passwordHash,
-        accessToken: null,
-        refreshToken: null,
-        expiresAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       });
 
       const result = await authService.login({
@@ -159,16 +181,8 @@ describe('AuthService', () => {
       const passwordHash = await bcrypt.hash('CorrectPass123!', 10);
       prisma.user.findUnique.mockResolvedValue(mockUser);
       prisma.account.findUnique.mockResolvedValue({
-        id: 'account-1',
-        userId: 'user-1',
-        provider: 'local',
-        providerAccountId: 'jane@example.com',
+        ...mockAccount,
         passwordHash,
-        accessToken: null,
-        refreshToken: null,
-        expiresAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       });
 
       await expect(
@@ -180,24 +194,18 @@ describe('AuthService', () => {
     });
 
     it('uses the same error for wrong email and wrong password (no enumeration)', async () => {
+      // Wrong email
       prisma.user.findUnique.mockResolvedValue(null);
       const noEmailError = await authService
         .login({ email: 'nobody@example.com', password: 'Pass123!' })
         .catch((e: UnauthorizedException) => e);
 
+      // Wrong password
       const passwordHash = await bcrypt.hash('Correct123!', 10);
       prisma.user.findUnique.mockResolvedValue(mockUser);
       prisma.account.findUnique.mockResolvedValue({
-        id: 'a1',
-        userId: 'user-1',
-        provider: 'local',
-        providerAccountId: 'jane@example.com',
+        ...mockAccount,
         passwordHash,
-        accessToken: null,
-        refreshToken: null,
-        expiresAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       });
       const wrongPassError = await authService
         .login({ email: 'jane@example.com', password: 'Wrong123!' })

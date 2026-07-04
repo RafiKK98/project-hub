@@ -78,6 +78,9 @@ importers:
       '@eslint/eslintrc':
         specifier: ^3.3.5
         version: 3.3.5
+      '@jest/globals':
+        specifier: ^30.4.1
+        version: 30.4.1
       '@nestjs/cli':
         specifier: ^11.0.23
         version: 11.0.23(@types/node@26.0.1)(prettier@3.9.1)

@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import {
@@ -38,23 +39,47 @@ const mockUser = {
   avatarUrl: null,
 };
 
-const mockIssue = {
-  id: 'issue-1',
-  number: 1,
-  title: 'Fix the button',
-  description: null,
-  status: IssueStatus.BACKLOG,
-  priority: IssuePriority.NO_PRIORITY,
-  boardOrder: 1000,
-  projectId: 'project-1',
-  createdById: 'user-1',
-  assigneeId: null,
-  dueDate: null,
+// assigneeId typed as string | null to match Prisma's Issue model exactly
+function makeMockIssue(assigneeId: string | null = null) {
+  return {
+    id: 'issue-1',
+    number: 1,
+    title: 'Fix the button',
+    description: null,
+    status: IssueStatus.BACKLOG,
+    priority: IssuePriority.NO_PRIORITY,
+    boardOrder: 1000,
+    projectId: 'project-1',
+    createdById: 'user-1',
+    assigneeId,
+    dueDate: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    createdBy: mockUser,
+    assignee: null,
+  };
+}
+
+const mockOrgMembership = (role: MemberRole = MemberRole.OWNER) => ({
+  id: 'm1',
+  userId: 'user-1',
+  organizationId: 'org-1',
+  role,
   createdAt: new Date(),
   updatedAt: new Date(),
-  createdBy: mockUser,
-  assignee: null,
-};
+});
+
+const mockProjectMember = (
+  userId: string,
+  role: ProjectMemberRole = ProjectMemberRole.DEVELOPER,
+) => ({
+  id: 'pm1',
+  projectId: 'project-1',
+  userId,
+  role,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
@@ -63,7 +88,9 @@ describe('IssuesService', () => {
   let prisma: MockPrisma;
 
   const mockNotificationsService = {
-    createNotification: jest.fn().mockResolvedValue(undefined),
+    createNotification: jest
+      .fn<() => Promise<void>>()
+      .mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -80,6 +107,7 @@ describe('IssuesService', () => {
     service = module.get<IssuesService>(IssuesService);
     jest.clearAllMocks();
     resetPrismaMock(prisma);
+    mockNotificationsService.createNotification.mockResolvedValue(undefined);
   });
 
   // ── Authorization ─────────────────────────────────────────────────────────
@@ -104,14 +132,9 @@ describe('IssuesService', () => {
 
     it('throws ForbiddenException when user is not a project member', async () => {
       prisma.project.findFirst.mockResolvedValue(mockProject);
-      prisma.membership.findUnique.mockResolvedValue({
-        id: 'm1',
-        userId: 'user-1',
-        organizationId: 'org-1',
-        role: MemberRole.DEVELOPER,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      prisma.membership.findUnique.mockResolvedValue(
+        mockOrgMembership(MemberRole.DEVELOPER),
+      );
       prisma.projectMember.findUnique.mockResolvedValue(null);
 
       await expect(
@@ -121,14 +144,9 @@ describe('IssuesService', () => {
 
     it('allows org OWNER access without a ProjectMember row', async () => {
       prisma.project.findFirst.mockResolvedValue(mockProject);
-      prisma.membership.findUnique.mockResolvedValue({
-        id: 'm1',
-        userId: 'user-1',
-        organizationId: 'org-1',
-        role: MemberRole.OWNER,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      prisma.membership.findUnique.mockResolvedValue(
+        mockOrgMembership(MemberRole.OWNER),
+      );
       prisma.issue.findMany.mockResolvedValue([]);
 
       const result = await service.findAllForProject(
@@ -138,7 +156,6 @@ describe('IssuesService', () => {
       );
 
       expect(result).toEqual([]);
-      // Should NOT check project membership for org owners
       expect(prisma.projectMember.findUnique).not.toHaveBeenCalled();
     });
   });
@@ -148,29 +165,19 @@ describe('IssuesService', () => {
   describe('create — sequential numbering', () => {
     function setupProjectAccess() {
       prisma.project.findFirst.mockResolvedValue(mockProject);
-      prisma.membership.findUnique.mockResolvedValue({
-        id: 'm1',
-        userId: 'user-1',
-        organizationId: 'org-1',
-        role: MemberRole.OWNER,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      prisma.membership.findUnique.mockResolvedValue(
+        mockOrgMembership(MemberRole.OWNER),
+      );
       prisma.organization.findFirst.mockResolvedValue(mockOrg as never);
     }
 
     it('assigns number 1 to the first issue in a project', async () => {
       setupProjectAccess();
-      // No existing issues
       prisma.$transaction.mockImplementation(
         async (fn: (tx: MockPrisma) => Promise<unknown>) => {
           const tx = createPrismaMock();
-          tx.issue.findFirst.mockResolvedValue(null); // no lastIssue, no lastByOrder
-          tx.issue.create.mockResolvedValue({
-            ...mockIssue,
-            number: 1,
-            boardOrder: 1000,
-          });
+          tx.issue.findFirst.mockResolvedValue(null);
+          tx.issue.create.mockResolvedValue(makeMockIssue() as never);
           return fn(tx);
         },
       );
@@ -188,15 +195,14 @@ describe('IssuesService', () => {
       prisma.$transaction.mockImplementation(
         async (fn: (tx: MockPrisma) => Promise<unknown>) => {
           const tx = createPrismaMock();
-          // Simulate 5 existing issues
           tx.issue.findFirst
-            .mockResolvedValueOnce({ number: 5 } as never) // lastIssue
-            .mockResolvedValueOnce({ boardOrder: 5000 } as never); // lastByOrder
+            .mockResolvedValueOnce({ number: 5 } as never)
+            .mockResolvedValueOnce({ boardOrder: 5000 } as never);
           tx.issue.create.mockResolvedValue({
-            ...mockIssue,
+            ...makeMockIssue(),
             number: 6,
             boardOrder: 6000,
-          });
+          } as never);
           return fn(tx);
         },
       );
@@ -218,10 +224,10 @@ describe('IssuesService', () => {
             .mockResolvedValueOnce({ number: 3 } as never)
             .mockResolvedValueOnce({ boardOrder: 3000 } as never);
           tx.issue.create.mockResolvedValue({
-            ...mockIssue,
+            ...makeMockIssue(),
             number: 4,
             boardOrder: 4000,
-          });
+          } as never);
           return fn(tx);
         },
       );
@@ -237,32 +243,22 @@ describe('IssuesService', () => {
   // ── Notifications ─────────────────────────────────────────────────────────
 
   describe('notifications on update', () => {
-    function setupIssueUpdate(overrides: Partial<typeof mockIssue> = {}) {
-      const issue = { ...mockIssue, ...overrides };
+    function setupIssueUpdate(assigneeId: string | null = null) {
+      const issue = makeMockIssue(assigneeId);
       prisma.project.findFirst.mockResolvedValue(mockProject);
-      prisma.membership.findUnique.mockResolvedValue({
-        id: 'm1',
-        userId: 'user-1',
-        organizationId: 'org-1',
-        role: MemberRole.OWNER,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      prisma.membership.findUnique.mockResolvedValue(
+        mockOrgMembership(MemberRole.OWNER),
+      );
       prisma.issue.findUnique.mockResolvedValue(issue as never);
       prisma.issue.update.mockResolvedValue(issue as never);
       prisma.organization.findFirst.mockResolvedValue(mockOrg as never);
     }
 
     it('sends ISSUE_ASSIGNED notification when assignee changes', async () => {
-      setupIssueUpdate({ assigneeId: null });
-      prisma.projectMember.findUnique.mockResolvedValue({
-        id: 'pm1',
-        projectId: 'project-1',
-        userId: 'user-2',
-        role: ProjectMemberRole.DEVELOPER,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      setupIssueUpdate(null); // currently unassigned
+      prisma.projectMember.findUnique.mockResolvedValue(
+        mockProjectMember('user-2') as never,
+      );
 
       await service.update('org-1', 'project-1', 1, 'user-1', {
         assigneeId: 'user-2',
@@ -274,17 +270,11 @@ describe('IssuesService', () => {
     });
 
     it('does NOT send notification when user assigns issue to themselves', async () => {
-      setupIssueUpdate({ assigneeId: null });
-      prisma.projectMember.findUnique.mockResolvedValue({
-        id: 'pm1',
-        projectId: 'project-1',
-        userId: 'user-1',
-        role: ProjectMemberRole.DEVELOPER,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      setupIssueUpdate(null);
+      prisma.projectMember.findUnique.mockResolvedValue(
+        mockProjectMember('user-1') as never,
+      );
 
-      // user-1 assigning to user-1 (themselves)
       await service.update('org-1', 'project-1', 1, 'user-1', {
         assigneeId: 'user-1',
       });
@@ -295,8 +285,7 @@ describe('IssuesService', () => {
     });
 
     it('sends ISSUE_STATUS_CHANGED notification to assignee', async () => {
-      // Issue already has an assignee (user-2), status is being changed by user-1
-      setupIssueUpdate({ assigneeId: 'user-2' });
+      setupIssueUpdate('user-2'); // issue assigned to user-2
 
       await service.update('org-1', 'project-1', 1, 'user-1', {
         status: IssueStatus.IN_PROGRESS,
@@ -311,8 +300,7 @@ describe('IssuesService', () => {
     });
 
     it('does NOT send status notification when updater is also the assignee', async () => {
-      // user-1 is both the updater and the assignee
-      setupIssueUpdate({ assigneeId: 'user-1' });
+      setupIssueUpdate('user-1'); // user-1 is both updater and assignee
 
       await service.update('org-1', 'project-1', 1, 'user-1', {
         status: IssueStatus.DONE,
