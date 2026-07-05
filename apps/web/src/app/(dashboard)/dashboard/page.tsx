@@ -59,7 +59,7 @@ export default function DashboardPage() {
   const { data: orgs } = useOrganizations();
 
   // Build a orgId → slug map so we can construct issue links
-  const orgSlugById = new Map(orgs?.map((o) => [o.id, o.slug]) ?? []);
+  // const orgSlugById = new Map(orgs?.map((o) => [o.id, o.slug]) ?? []);
 
   // For dashboard issue rows we need the orgSlug. We derive it from projectId via
   // the project breakdowns list which carries orgSlug.
