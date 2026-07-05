@@ -75,4 +75,34 @@ pnpm format       # Format all files with Prettier
 
 ## CI/CD
 
-GitHub Actions runs type checking and linting on every push and pull request to `main` and `develop`.
+GitHub Actions runs type checking, linting, and tests on every push and pull request to `main` and `develop`.
+
+## Deployment
+
+### API (Railway / Render / Fly.io)
+
+1. Set all environment variables from `apps/api/.env.example`
+2. Set `NODE_ENV=production`
+3. Set `FRONTEND_URL` to your frontend's domain
+4. Generate JWT secrets: `openssl rand -base64 64`
+5. Build command: `pnpm --filter @projecthub/api build`
+6. Start command: `node apps/api/dist/main`
+7. Run migrations before deploying: `pnpm --filter @projecthub/api prisma:migrate`
+
+### Web (Vercel)
+
+1. Set `NEXT_PUBLIC_API_URL` to your API's domain (e.g. `https://api.yourdomain.com`)
+2. Framework preset: Next.js
+3. Root directory: `apps/web`
+4. Build command: `cd ../.. && pnpm build --filter=@projecthub/web`
+5. Install command: `pnpm install --frozen-lockfile`
+
+### Production checklist
+
+- [ ] `DATABASE_URL` points to Neon pooled connection
+- [ ] `DIRECT_URL` points to Neon direct connection
+- [ ] `JWT_SECRET` is a random 64-byte base64 string
+- [ ] `JWT_REFRESH_SECRET` is a different random 64-byte base64 string
+- [ ] `FRONTEND_URL` matches the exact origin of the deployed frontend
+- [ ] `NEXT_PUBLIC_API_URL` matches the exact origin of the deployed API
+- [ ] `NODE_ENV=production` on the API server

@@ -7,7 +7,6 @@ import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, {
-    // Suppress NestJS startup logs in production; use structured logger instead
     logger:
       process.env['NODE_ENV'] === 'production'
         ? ['error', 'warn']
@@ -15,39 +14,43 @@ async function bootstrap(): Promise<void> {
   });
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('PORT', 4000);
-  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+  const port = configService.get<number>('app.port', 4000);
+  const nodeEnv = configService.get<string>('app.nodeEnv', 'development');
+  const frontendUrl = configService.get<string>(
+    'app.frontendUrl',
+    'http://localhost:3000',
+  );
 
   // ── Global prefix & versioning ─────────────────────────────────────────────
   app.setGlobalPrefix('api');
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   // ── CORS ───────────────────────────────────────────────────────────────────
+  // In production, only the configured FRONTEND_URL is allowed.
+  // In development, localhost:3000 is allowed.
+  const allowedOrigins =
+    nodeEnv === 'production'
+      ? [frontendUrl]
+      : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+
   app.enableCors({
-    origin:
-      nodeEnv === 'production'
-        ? [configService.get<string>('FRONTEND_URL', 'https://yourdomain.com')]
-        : ['http://localhost:3000'],
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400, // 24h preflight cache
   });
 
   // ── Global exception filter ────────────────────────────────────────────────
-  // Catches all unhandled exceptions and returns a consistent ApiError shape.
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   // ── Global validation pipe ─────────────────────────────────────────────────
-  // whitelist strips properties not in the DTO, forbidNonWhitelisted throws.
-  // This is your first line of defense against malformed input.
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
 
@@ -65,8 +68,11 @@ async function bootstrap(): Promise<void> {
   }
 
   await app.listen(port);
-  console.warn(`🚀 API running on http://localhost:${port}/api/v1`);
-  console.warn(`📖 Swagger available at http://localhost:${port}/api/docs`);
+
+  if (nodeEnv !== 'production') {
+    console.warn(`🚀 API running on http://localhost:${port}/api/v1`);
+    console.warn(`📖 Swagger available at http://localhost:${port}/api/docs`);
+  }
 }
 
 void bootstrap();

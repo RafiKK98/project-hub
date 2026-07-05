@@ -11,53 +11,50 @@ on:
       - develop
 
 concurrency:
-  # Cancel in-progress runs on the same branch when a new push arrives.
-  # This prevents redundant runs piling up on fast-moving branches.
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  # Turbo remote cache (enable in Milestone 15 with TURBO_TOKEN secret)
   TURBO_TELEMETRY_DISABLED: 1
 
 jobs:
   ci:
-    name: Type Check & Lint
+    name: Lint, Type Check & Test
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
-      # ── Checkout ────────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── pnpm ────────────────────────────────────────────────────────────────
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      # ── Node.js ─────────────────────────────────────────────────────────────
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
 
-      # ── Dependencies ─────────────────────────────────────────────────────────
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # ── Prisma ───────────────────────────────────────────────────────────────
-      # prisma generate only reads the schema — it does not connect to the DB.
-      # No DATABASE_URL secret needed here.
       - name: Generate Prisma client
         run: pnpm --filter @projecthub/api prisma:generate
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          DIRECT_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
 
-      # ── Type Check ───────────────────────────────────────────────────────────
       - name: Type check all packages
         run: pnpm type-check
 
-      # ── Lint ─────────────────────────────────────────────────────────────────
       - name: Lint all packages
         run: pnpm lint
+
+      - name: Run backend tests
+        run: pnpm --filter @projecthub/api test
+
+      - name: Run frontend tests
+        run: pnpm --filter @projecthub/web test

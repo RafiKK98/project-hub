@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "turbo build",
+    "build:check": "turbo build --filter=@projecthub/api --filter=@projecthub/web",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\" --ignore-path .gitignore",

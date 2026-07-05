@@ -16,14 +16,26 @@ export interface AppConfig {
   };
 }
 
-export default registerAs('app', (): AppConfig => {
-  const required = (key: string): string => {
-    const value = process.env[key];
-    if (!value)
-      throw new Error(`Missing required environment variable: ${key}`);
-    return value;
-  };
+function required(key: string): string {
+  const value = process.env[key];
+  if (!value) throw new Error(`Missing required environment variable: ${key}`);
+  return value;
+}
 
+function requireInProduction(key: string, devFallback: string): string {
+  const value = process.env[key];
+  if (!value) {
+    if (process.env['NODE_ENV'] === 'production') {
+      throw new Error(
+        `Missing required environment variable in production: ${key}`,
+      );
+    }
+    return devFallback;
+  }
+  return value;
+}
+
+export default registerAs('app', (): AppConfig => {
   return {
     nodeEnv: process.env['NODE_ENV'] ?? 'development',
     port: parseInt(process.env['PORT'] ?? '4000', 10),
@@ -33,12 +45,15 @@ export default registerAs('app', (): AppConfig => {
       directUrl: process.env['DIRECT_URL'] ?? required('DATABASE_URL'),
     },
     jwt: {
-      secret:
-        process.env['JWT_SECRET'] ?? 'dev-jwt-secret-change-in-production',
+      secret: requireInProduction(
+        'JWT_SECRET',
+        'dev-jwt-secret-do-not-use-in-production-32-chars',
+      ),
       expiresIn: process.env['JWT_EXPIRES_IN'] ?? '15m',
-      refreshSecret:
-        process.env['JWT_REFRESH_SECRET'] ??
-        'dev-refresh-secret-change-in-production',
+      refreshSecret: requireInProduction(
+        'JWT_REFRESH_SECRET',
+        'dev-refresh-secret-do-not-use-in-production-32',
+      ),
       refreshExpiresIn: process.env['JWT_REFRESH_EXPIRES_IN'] ?? '7d',
     },
   };
