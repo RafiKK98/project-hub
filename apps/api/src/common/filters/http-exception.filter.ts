@@ -7,7 +7,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { ApiError } from '@projecthub/types';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
+import { Request } from 'express';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
