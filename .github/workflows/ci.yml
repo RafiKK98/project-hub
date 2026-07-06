@@ -68,4 +68,4 @@ jobs:
       - name: Build web
         run: pnpm --filter @projecthub/web build
         env:
-          NEXT_PUBLIC_API_URL: "https://api.placeholder.com"
+          NEXT_PUBLIC_API_URL: "https://project-hub-api-36gq.onrender.com"
