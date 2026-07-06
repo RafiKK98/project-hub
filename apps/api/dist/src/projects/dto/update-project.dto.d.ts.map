@@ -1,0 +1,1 @@
+{"version":3,"file":"update-project.dto.d.ts","sourceRoot":"","sources":["../../../../src/projects/dto/update-project.dto.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,aAAa,EAAE,MAAM,gBAAgB,CAAC;AAS/C,qBAAa,gBAAgB;IAM3B,IAAI,CAAC,EAAE,MAAM,CAAC;IAMd,WAAW,CAAC,EAAE,MAAM,CAAC;IAKrB,MAAM,CAAC,EAAE,aAAa,CAAC;CACxB"}

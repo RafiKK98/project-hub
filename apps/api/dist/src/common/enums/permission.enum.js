@@ -1,0 +1,33 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Permission = void 0;
+var Permission;
+(function (Permission) {
+    Permission["PLATFORM_MANAGE_USERS"] = "platform:manage_users";
+    Permission["PLATFORM_VIEW_METRICS"] = "platform:view_metrics";
+    Permission["PLATFORM_MANAGE_SETTINGS"] = "platform:manage_settings";
+    Permission["ORG_CREATE"] = "org:create";
+    Permission["ORG_READ"] = "org:read";
+    Permission["ORG_UPDATE"] = "org:update";
+    Permission["ORG_DELETE"] = "org:delete";
+    Permission["ORG_MANAGE_MEMBERS"] = "org:manage_members";
+    Permission["ORG_MANAGE_BILLING"] = "org:manage_billing";
+    Permission["PROJECT_CREATE"] = "project:create";
+    Permission["PROJECT_READ"] = "project:read";
+    Permission["PROJECT_UPDATE"] = "project:update";
+    Permission["PROJECT_DELETE"] = "project:delete";
+    Permission["PROJECT_MANAGE_MEMBERS"] = "project:manage_members";
+    Permission["PROJECT_MANAGE_SETTINGS"] = "project:manage_settings";
+    Permission["ISSUE_CREATE"] = "issue:create";
+    Permission["ISSUE_READ"] = "issue:read";
+    Permission["ISSUE_UPDATE"] = "issue:update";
+    Permission["ISSUE_DELETE"] = "issue:delete";
+    Permission["ISSUE_ASSIGN"] = "issue:assign";
+    Permission["ISSUE_CHANGE_STATUS"] = "issue:change_status";
+    Permission["COMMENT_CREATE"] = "comment:create";
+    Permission["COMMENT_READ"] = "comment:read";
+    Permission["COMMENT_UPDATE_OWN"] = "comment:update_own";
+    Permission["COMMENT_DELETE_OWN"] = "comment:delete_own";
+    Permission["COMMENT_DELETE_ANY"] = "comment:delete_any";
+})(Permission || (exports.Permission = Permission = {}));
+//# sourceMappingURL=permission.enum.js.map
