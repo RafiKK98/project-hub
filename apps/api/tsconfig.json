@@ -3,6 +3,9 @@
   "compilerOptions": {
     "types": ["jest", "node"],
     "module": "nodenext",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "moduleResolution": "nodenext",
     "resolvePackageJsonExports": true,
     "esModuleInterop": true,
@@ -24,5 +27,7 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "exactOptionalPropertyTypes": false
-  }
+  },
+  "include": ["src", "api"],
+  "exclude": ["node_modules", "dist", "test"]
 }

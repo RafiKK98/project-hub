@@ -19,9 +19,9 @@ env:
 
 jobs:
   ci:
-    name: Lint, Type Check & Test
+    name: Lint, Type Check, Test & Build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout repository
@@ -58,3 +58,14 @@ jobs:
 
       - name: Run frontend tests
         run: pnpm --filter @projecthub/web test
+
+      - name: Build API (serverless)
+        run: pnpm --filter @projecthub/api build
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          DIRECT_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+
+      - name: Build web
+        run: pnpm --filter @projecthub/web build
+        env:
+          NEXT_PUBLIC_API_URL: "https://api.placeholder.com"
