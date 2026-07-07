@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, it, jest } from '@jest/globals';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
