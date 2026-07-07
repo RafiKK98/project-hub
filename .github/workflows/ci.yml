@@ -59,7 +59,7 @@ jobs:
       - name: Run frontend tests
         run: pnpm --filter @projecthub/web test
 
-      - name: Build API (serverless)
+      - name: Build API
         run: pnpm --filter @projecthub/api build
         env:
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
