@@ -259,7 +259,7 @@ export default function OrgPage({ params }: OrgPageProps) {
                 <div className="flex-1">
                   <Input
                     placeholder="colleague@example.com"
-                    error={errors.email?.message!}
+                    error={errors.email?.message}
                     {...register("email")}
                   />
                 </div>

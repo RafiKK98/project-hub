@@ -98,7 +98,6 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException('Invalid email or password');
         }
         const tokens = await this.tokens.issueTokens(user);
-        console.warn({ user: this.toAuthUser(user), tokens });
         return { user: this.toAuthUser(user), tokens };
     }
     async refresh(rawRefreshToken) {

@@ -89,7 +89,7 @@ export default function ProjectSettingsPage({
               </Label>
               <Input
                 id="name"
-                error={errors.name?.message!}
+                error={errors.name?.message}
                 {...register("name")}
               />
             </div>
@@ -98,7 +98,7 @@ export default function ProjectSettingsPage({
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                error={errors.description?.message!}
+                error={errors.description?.message}
                 {...register("description")}
               />
             </div>

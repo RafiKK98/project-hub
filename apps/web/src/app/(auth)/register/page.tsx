@@ -59,7 +59,7 @@ export default function RegisterPage() {
             placeholder="Jane Doe"
             autoComplete="name"
             autoFocus
-            error={errors.name?.message!}
+            error={errors.name?.message}
             {...register("name")}
           />
         </div>
@@ -73,7 +73,7 @@ export default function RegisterPage() {
             type="email"
             placeholder="you@example.com"
             autoComplete="email"
-            error={errors.email?.message!}
+            error={errors.email?.message}
             {...register("email")}
           />
         </div>
@@ -88,7 +88,7 @@ export default function RegisterPage() {
               type={showPassword ? "text" : "password"}
               placeholder="Min. 8 characters"
               autoComplete="new-password"
-              error={errors.password?.message!}
+              error={errors.password?.message}
               className="pr-10"
               {...register("password")}
             />

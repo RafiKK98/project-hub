@@ -1,10 +1,11 @@
 import { cn } from "@/lib/utils";
+import { type ReactNode } from "react";
 
 type BadgeVariant =
   "default" | "secondary" | "success" | "warning" | "destructive";
 
 interface BadgeProps {
-  children: React.ReactNode;
+  children: ReactNode;
   variant?: BadgeVariant;
   className?: string;
 }

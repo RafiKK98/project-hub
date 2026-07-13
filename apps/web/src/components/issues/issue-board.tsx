@@ -14,7 +14,7 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { IssueDto, IssueStatus } from "@projecthub/types";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BoardCard } from "./board-card";
 import { BoardColumn } from "./board-column";
 import { STATUS_OPTIONS } from "./status-icon";
@@ -59,13 +59,16 @@ export function IssueBoard({
 
   // Track the last server copy so we know when to resync
   const lastServerKey = useRef("");
-  const serverKey = issues
-    .map((i) => `${i.id}:${i.status}:${i.boardOrder}`)
-    .join("|");
-  if (serverKey !== lastServerKey.current && !activeIssue) {
-    lastServerKey.current = serverKey;
-    setLocalIssues([...issues].sort((a, b) => a.boardOrder - b.boardOrder));
-  }
+
+  useEffect(() => {
+    const serverKey = issues
+      .map((i) => `${i.id}:${i.status}:${i.boardOrder}`)
+      .join("|");
+    if (serverKey !== lastServerKey.current && !activeIssue) {
+      lastServerKey.current = serverKey;
+      setLocalIssues([...issues].sort((a, b) => a.boardOrder - b.boardOrder));
+    }
+  }, [issues, activeIssue]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),

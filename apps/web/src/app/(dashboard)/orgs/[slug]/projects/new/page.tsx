@@ -14,7 +14,7 @@ import { CreateProjectPayload } from "@projecthub/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 interface NewProjectPageProps {
   params: Promise<{ slug: string }>;
@@ -27,13 +27,14 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<CreateProjectFormValues>({
     resolver: zodResolver(createProjectSchema),
   });
 
-  const nameValue = watch("name");
+  const nameValue = useWatch({ control, name: 'name' });
+  const identifierValue = useWatch({ control, name: 'identifier' }) || "WEB";
 
   function onSubmit(values: CreateProjectFormValues) {
     createProject.mutate(values as CreateProjectPayload);
@@ -68,7 +69,7 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
             id="name"
             placeholder="Website Redesign"
             autoFocus
-            error={errors.name?.message!}
+            error={errors.name?.message}
             {...register("name")}
           />
         </div>
@@ -82,12 +83,12 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
             placeholder="WEB"
             className="font-mono uppercase"
             maxLength={6}
-            error={errors.identifier?.message!}
+            error={errors.identifier?.message}
             {...register("identifier")}
           />
           <p className="text-xs text-muted-foreground">
             Used to prefix issues, e.g.{" "}
-            {(watch("identifier") || "WEB").toUpperCase()}-1
+            {identifierValue.toUpperCase()}-1
             {nameValue ? "" : ""}
           </p>
         </div>
@@ -97,7 +98,7 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
           <Textarea
             id="description"
             placeholder="What is this project about?"
-            error={errors.description?.message!}
+            error={errors.description?.message}
             {...register("description")}
           />
         </div>

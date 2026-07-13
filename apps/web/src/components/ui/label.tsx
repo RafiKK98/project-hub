@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import * as React from "react";
+import { type LabelHTMLAttributes } from "react";
 
-interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+interface LabelProps extends LabelHTMLAttributes<HTMLLabelElement> {
   required?: boolean;
 }
 

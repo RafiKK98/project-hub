@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import * as React from "react";
+import { type ButtonHTMLAttributes } from "react";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline" | "ghost" | "destructive";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;

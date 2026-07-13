@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 interface AvatarProps {
-  name?: string | null;
+  name?: string | null | undefined;
   src?: string | null;
   size?: "sm" | "md" | "lg";
   className?: string;

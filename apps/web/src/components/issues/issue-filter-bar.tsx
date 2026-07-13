@@ -14,7 +14,7 @@ import { useIssueFilters } from "@/hooks/use-issue-filters";
 import { cn } from "@/lib/utils";
 import type { ProjectMemberDto } from "@projecthub/types";
 import { ChevronDown, Search, X } from "lucide-react";
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 
 interface FilterBarProps {
   members?: ProjectMemberDto[];
@@ -180,7 +180,7 @@ export function IssueFilterBar({ members }: FilterBarProps) {
 interface FilterDropdownProps {
   label: string;
   activeCount: number;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function FilterDropdown({ label, activeCount, children }: FilterDropdownProps) {

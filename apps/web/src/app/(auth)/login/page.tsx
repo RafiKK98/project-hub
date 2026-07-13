@@ -59,7 +59,7 @@ export default function LoginPage() {
             placeholder="you@example.com"
             autoComplete="email"
             autoFocus
-            error={errors.email?.message!}
+            error={errors.email?.message}
             {...register("email")}
           />
         </div>
@@ -82,7 +82,7 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               autoComplete="current-password"
-              error={errors.password?.message!}
+              error={errors.password?.message}
               className="pr-10"
               {...register("password")}
             />

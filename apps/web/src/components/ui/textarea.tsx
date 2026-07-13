@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { forwardRef, TextareaHTMLAttributes } from "react";
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  error?: string;
+  error?: string | undefined;
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(

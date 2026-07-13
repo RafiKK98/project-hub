@@ -29,7 +29,7 @@ export function CommentComposer({
   }
   return (
     <form onSubmit={handleSubmit} className="flex gap-3">
-      <Avatar name={currentUser?.name! ?? currentUser?.email!} size="sm" />
+      <Avatar name={currentUser?.name ?? currentUser?.email} size="sm" />
       <div className="flex-1 min-w-0">
         <Textarea
           value={body}

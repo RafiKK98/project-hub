@@ -134,7 +134,7 @@ export default function AcceptInvitationPage({
       </div>
 
       <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-        You've been invited
+        You&apos;ve been invited
       </h1>
       <p className="mt-2 text-muted-foreground">
         Join{" "}

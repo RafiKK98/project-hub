@@ -87,7 +87,7 @@ export default function NewIssuePage({ params }: NewIssuePageProps) {
             id="title"
             placeholder="Fix login button alignment on mobile"
             autoFocus
-            error={errors.title?.message!}
+            error={errors.title?.message}
             {...register("title")}
           />
         </div>
@@ -98,7 +98,7 @@ export default function NewIssuePage({ params }: NewIssuePageProps) {
             id="description"
             placeholder="Add more details..."
             rows={4}
-            error={errors.description?.message!}
+            error={errors.description?.message}
             {...register("description")}
           />
         </div>

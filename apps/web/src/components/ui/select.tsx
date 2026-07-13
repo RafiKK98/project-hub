@@ -1,11 +1,12 @@
 import { cn } from "@/lib/utils";
-import * as React from "react";
+import { forwardRef, type SelectHTMLAttributes } from "react";
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  error?: string;
+
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  error?: string | undefined;
 }
 
-export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, error, children, ...props }, ref) => {
     return (
       <div className="flex flex-col gap-1.5">

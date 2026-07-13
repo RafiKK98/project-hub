@@ -77,12 +77,12 @@ export function TopNav() {
               userMenuOpen && "bg-muted text-foreground",
             )}
           >
-            <Avatar name={user?.name! ?? user?.email} size="sm" />
+            <Avatar name={user?.name ?? user?.email} size="sm" />
             <ChevronDown className="h-3 w-3" />
           </button>
 
           {userMenuOpen && (
-            <div className="absolute right-0 top-10 z-50 w-56 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+            <div className="absolute bg-white right-0 top-10 z-50 w-56 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
               {/* User info */}
               <div className="border-b border-border px-4 py-3">
                 <p className="text-sm font-medium text-foreground">

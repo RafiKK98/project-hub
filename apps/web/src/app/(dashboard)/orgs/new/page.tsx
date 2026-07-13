@@ -58,7 +58,7 @@ export default function NewOrgPage() {
             id="name"
             placeholder="Acme Corp"
             autoFocus
-            error={errors.name?.message!}
+            error={errors.name?.message}
             {...register("name")}
           />
         </div>
@@ -68,7 +68,7 @@ export default function NewOrgPage() {
           <Textarea
             id="description"
             placeholder="What does your organization do?"
-            error={errors.description?.message!}
+            error={errors.description?.message}
             {...register("description")}
           />
         </div>

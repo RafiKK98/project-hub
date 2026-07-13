@@ -78,7 +78,7 @@ export default function DashboardPage() {
           Good {getTimeOfDay()}, {user?.name?.split(" ")[0] ?? "there"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Here's what needs your attention today.
+          Here&apos;s what needs your attention today.
         </p>
       </div>
 

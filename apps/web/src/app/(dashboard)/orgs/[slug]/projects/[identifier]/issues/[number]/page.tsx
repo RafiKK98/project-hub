@@ -22,7 +22,7 @@ import {
 import type { IssuePriority, IssueStatus } from "@projecthub/types";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { use, useState } from "react";
 
 interface IssueDetailPageProps {
   params: Promise<{ slug: string; identifier: string; number: string }>;
@@ -34,6 +34,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [descDraft, setDescDraft] = useState("");
+  const [prevIssueId, setPrevIssueId] = useState<string | undefined>();
 
   const { data: org } = useOrganization(slug);
   const { data: project } = useProjectByIdentifier(org?.id ?? "", identifier);
@@ -55,12 +56,11 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
     identifier,
   );
 
-  useEffect(() => {
-    if (issue) {
-      setTitleDraft(issue.title);
-      setDescDraft(issue.description ?? "");
-    }
-  }, [issue]);
+  if (issue && issue.id !== prevIssueId) {
+    setPrevIssueId(issue.id);
+    setTitleDraft(issue.title);
+    setDescDraft(issue.description ?? "");
+  }
 
   function commitTitle() {
     if (issue && titleDraft.trim() && titleDraft !== issue.title)
