@@ -11,11 +11,16 @@
     "build": "turbo build",
     "build:check": "turbo build --filter=@projecthub/api --filter=@projecthub/web",
     "dev": "turbo dev",
-    "lint": "turbo lint",
+    "lint": "turbo lint --filter=@projecthub/api --filter=@projecthub/web",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\" --ignore-path .gitignore",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\" --ignore-path .gitignore",
     "type-check": "turbo type-check",
     "clean": "turbo clean && rm -rf node_modules"
+  },
+  "pnpm": {
+    "overrides": {
+      "eslint": "^9.0.0"
+    }
   },
   "devDependencies": {
     "prettier": "^3.9.1",
