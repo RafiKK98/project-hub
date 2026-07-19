@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import {
   useDeleteOrganization,
@@ -96,12 +97,9 @@ export default function OrgSettingsPage({ params }: OrgSettingsPageProps) {
             </div>
 
             <div className="flex justify-end">
-              <Button
-                type="submit"
-                isLoading={updateOrg.isPending}
-                disabled={!isDirty}
-              >
+              <Button type="submit" disabled={updateOrg.isPending || !isDirty}>
                 Save changes
+                {updateOrg.isPending && <Spinner data-icon="inline-start" />}
               </Button>
             </div>
           </form>
@@ -133,10 +131,13 @@ export default function OrgSettingsPage({ params }: OrgSettingsPageProps) {
                   <Button
                     variant="destructive"
                     size="sm"
-                    isLoading={deleteOrg.isPending}
+                    disabled={deleteOrg.isPending}
                     onClick={() => deleteOrg.mutate(org.id)}
                   >
                     Yes, delete
+                    {deleteOrg.isPending && (
+                      <Spinner data-icon="inline-start" />
+                    )}
                   </Button>
                   <Button
                     variant="outline"

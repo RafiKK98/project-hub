@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import {
   registerSchema,
@@ -92,10 +93,12 @@ export default function RegisterPage() {
               className="pr-10"
               {...register("password")}
             />
-            <button
+            <Button
               type="button"
+              size="icon"
+              variant="ghost"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground hover:bg-transparent"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
@@ -103,7 +106,7 @@ export default function RegisterPage() {
               ) : (
                 <Eye className="h-4 w-4" />
               )}
-            </button>
+            </Button>
           </div>
           <p className="text-xs text-muted-foreground">
             Must be 8+ characters with uppercase, lowercase, and a number
@@ -113,10 +116,11 @@ export default function RegisterPage() {
         <Button
           type="submit"
           size="lg"
-          isLoading={isLoading}
+          disabled={isLoading}
           className="mt-2 w-full"
         >
           Create account
+          {isLoading && <Spinner data-icon="inline-start" />}
         </Button>
       </form>
 

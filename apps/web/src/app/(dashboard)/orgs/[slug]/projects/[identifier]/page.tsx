@@ -5,8 +5,8 @@ import { IssueListGrouped } from "@/components/issues/issue-list-grouped";
 import { LazyIssueBoard } from "@/components/issues/lazy-issue-board";
 import { ViewToggle, type IssueView } from "@/components/issues/view-toggle";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
-import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
+import { Button } from "@/components/ui/shadcn/button";
 import { applyIssueFilters, useIssueFilters } from "@/hooks/use-issue-filters";
 import { useIssues, useReorderIssue } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
@@ -220,7 +220,9 @@ function ProjectPageInner({
         <div className="divide-y divide-border rounded-lg border border-border">
           {members?.map((member) => (
             <div key={member.id} className="flex items-center gap-3 px-4 py-3">
-              <Avatar name={member.user.name ?? member.user.email} size="sm" />
+              <Avatar size="sm">
+                <AvatarFallback name={member.user.name ?? member.user.email} />
+              </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
                   {member.user.name ?? member.user.email}

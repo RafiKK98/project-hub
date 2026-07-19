@@ -9,9 +9,14 @@ import {
   getStatusLabel,
   STATUS_OPTIONS,
 } from "@/components/issues/status-icon";
-import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/shadcn/avatar";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useDeleteIssue, useIssue, useUpdateIssue } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
@@ -19,6 +24,7 @@ import {
   useProjectByIdentifier,
   useProjectMembers,
 } from "@/hooks/use-projects";
+import { getInitials } from "@/lib/utils";
 import type { IssuePriority, IssueStatus } from "@projecthub/types";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -119,10 +125,11 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
             <Button
               variant="destructive"
               size="sm"
-              isLoading={deleteIssue.isPending}
+              disabled={deleteIssue.isPending}
               onClick={() => deleteIssue.mutate(issue.number)}
             >
               Confirm
+              {deleteIssue.isPending && <Spinner data-icon="inline-start" />}
             </Button>
             <Button
               variant="outline"
@@ -252,10 +259,15 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
               Created by
             </p>
             <div className="flex items-center gap-2">
-              <Avatar
-                name={issue.createdBy.name ?? issue.createdBy.email}
-                size="sm"
-              />
+              <Avatar size="sm">
+                <AvatarImage
+                  src={issue.createdBy.avatarUrl!}
+                  alt={`@${issue.createdBy.email.split("@")[0]}`}
+                />
+                <AvatarFallback className="bg-teal-500 text-muted">
+                  {getInitials(issue.createdBy.name ?? issue.createdBy.email)}
+                </AvatarFallback>
+              </Avatar>
               <span className="text-sm text-foreground">
                 {issue.createdBy.name ?? issue.createdBy.email}
               </span>

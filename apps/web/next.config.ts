@@ -2,36 +2,17 @@ import type { NextConfig } from "next";
 
 const isDev = process.env["NODE_ENV"] !== "production";
 
-// ── Security headers ──────────────────────────────────────────────────────────
-// Applied to every response. Adjust CSP if you add third-party scripts.
 const securityHeaders = [
-  {
-    key: "X-DNS-Prefetch-Control",
-    value: "on",
-  },
-  {
-    key: "X-Frame-Options",
-    value: "SAMEORIGIN",
-  },
-  {
-    key: "X-Content-Type-Options",
-    value: "nosniff",
-  },
-  {
-    key: "Referrer-Policy",
-    value: "strict-origin-when-cross-origin",
-  },
+  { key: "X-DNS-Prefetch-Control", value: "on" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  { key: "X-XSS-Protection", value: "1; mode=block" },
   {
-    key: "X-XSS-Protection",
-    value: "1; mode=block",
-  },
-  {
-    // Conservative CSP — tighten further for production by removing 'unsafe-inline'
-    // once you have a nonce-based approach or CSS-in-JS is not in use.
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
@@ -39,8 +20,6 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self' https://fonts.gstatic.com",
-      // In development, allow HTTP localhost for API calls.
-      // In production, only HTTPS is permitted.
       isDev
         ? "connect-src 'self' http://localhost:* ws://localhost:*"
         : "connect-src 'self' https:",
@@ -55,20 +34,11 @@ const nextConfig: NextConfig = {
     "@projecthub/types",
     "@projecthub/utils",
   ],
-
   reactStrictMode: true,
-
-  // Disable source maps in production to avoid leaking source code
   productionBrowserSourceMaps: false,
-
   images: {
-    remotePatterns: [
-      // Add your avatar/image CDN domains here when needed
-      // { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
-    ],
+    remotePatterns: [],
   },
-
-  // Apply security headers to all routes
   async headers() {
     return [
       {
@@ -77,17 +47,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-
-  // Redirect root to dashboard
-  async redirects() {
-    return [
-      {
-        source: "/",
-        destination: "/dashboard",
-        permanent: false,
-      },
-    ];
-  },
+  // No redirects — / now has a real landing page
 };
 
 export default nextConfig;

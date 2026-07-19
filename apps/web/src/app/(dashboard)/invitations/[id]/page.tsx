@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
 import { orgKeys } from "@/hooks/use-organizations";
 import { apiClient, ApiClientError } from "@/lib/api-client";
 import { useAuthStore } from "@/store/auth.store";
@@ -160,12 +161,12 @@ export default function AcceptInvitationPage({
       <div className="mt-8 flex flex-col gap-3">
         <Button
           onClick={handleAccept}
-          isLoading={accepting}
-          disabled={!!emailMismatch}
+          disabled={accepting || !!emailMismatch}
           size="lg"
           className="w-full"
         >
           Accept invitation
+          {accepting && <Spinner data-icon="inline-start" />}
         </Button>
         <Button
           variant="outline"

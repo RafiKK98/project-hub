@@ -4,10 +4,11 @@ import {
   PRIORITY_OPTIONS,
   getPriorityLabel,
 } from "@/components/issues/priority-icon";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateIssue } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
@@ -139,8 +140,9 @@ export default function NewIssuePage({ params }: NewIssuePageProps) {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" isLoading={createIssue.isPending}>
+          <Button type="submit" disabled={createIssue.isPending}>
             Create issue
+            {createIssue.isPending && <Spinner data-icon="inline-start" />}
           </Button>
         </div>
       </form>

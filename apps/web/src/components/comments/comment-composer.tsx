@@ -1,8 +1,9 @@
+import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
 import { useCreateComment } from "@/hooks/use-comments";
 import { useAuthStore } from "@/store/auth.store";
 import { SubmitEvent, useState } from "react";
-import { Avatar } from "../ui/avatar";
-import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 
 interface CommentComposerProps {
@@ -29,7 +30,9 @@ export function CommentComposer({
   }
   return (
     <form onSubmit={handleSubmit} className="flex gap-3">
-      <Avatar name={currentUser?.name ?? currentUser?.email} size="sm" />
+      <Avatar size="sm">
+        <AvatarFallback name={currentUser?.name ?? currentUser?.email} />
+      </Avatar>
       <div className="flex-1 min-w-0">
         <Textarea
           value={body}
@@ -41,10 +44,10 @@ export function CommentComposer({
           <Button
             type="submit"
             size="sm"
-            isLoading={createComment.isPending}
-            disabled={!body.trim()}
+            disabled={createComment.isPending || !body.trim()}
           >
             Comment
+            {createComment.isPending && <Spinner data-icon="inline-start" />}
           </Button>
         </div>
       </div>

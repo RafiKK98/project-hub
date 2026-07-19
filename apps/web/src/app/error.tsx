@@ -1,17 +1,18 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
+import { Button } from "@/components/ui/shadcn/button";
+import { useEffect } from "react";
 
 interface ErrorPageProps {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }
 
 export default function GlobalError({ error, reset }: ErrorPageProps) {
   useEffect(() => {
     // In production, send to your error tracking service (Sentry, etc.)
-    console.error(error)
-  }, [error])
+    console.error(error);
+  }, [error]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background">
@@ -28,13 +29,8 @@ export default function GlobalError({ error, reset }: ErrorPageProps) {
             ID: {error.digest}
           </p>
         )}
-        <button
-          onClick={reset}
-          className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-80"
-        >
-          Try again
-        </button>
+        <Button onClick={reset}>Try again</Button>
       </div>
     </main>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 import { Providers } from "@/components/providers";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -19,7 +19,8 @@ export const metadata: Metadata = {
     default: "ProjectHub",
     template: "%s | ProjectHub",
   },
-  description: "Modern project management for engineering teams.",
+  description:
+    "Project management for modern engineering teams. Track issues, ship faster.",
   robots: {
     index: false, // flip to true on public launch
     follow: false,

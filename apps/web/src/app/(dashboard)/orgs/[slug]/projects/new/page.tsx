@@ -1,7 +1,8 @@
 "use client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useOrganization } from "@/hooks/use-organizations";
 import { useCreateProject } from "@/hooks/use-projects";
@@ -33,8 +34,8 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
     resolver: zodResolver(createProjectSchema),
   });
 
-  const nameValue = useWatch({ control, name: 'name' });
-  const identifierValue = useWatch({ control, name: 'identifier' }) || "WEB";
+  const nameValue = useWatch({ control, name: "name" });
+  const identifierValue = useWatch({ control, name: "identifier" }) || "WEB";
 
   function onSubmit(values: CreateProjectFormValues) {
     createProject.mutate(values as CreateProjectPayload);
@@ -87,8 +88,7 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
             {...register("identifier")}
           />
           <p className="text-xs text-muted-foreground">
-            Used to prefix issues, e.g.{" "}
-            {identifierValue.toUpperCase()}-1
+            Used to prefix issues, e.g. {identifierValue.toUpperCase()}-1
             {nameValue ? "" : ""}
           </p>
         </div>
@@ -109,8 +109,9 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" isLoading={createProject.isPending}>
+          <Button type="submit" disabled={createProject.isPending}>
             Create project
+            {createProject.isPending && <Spinner data-icon="inline-start" />}
           </Button>
         </div>
       </form>

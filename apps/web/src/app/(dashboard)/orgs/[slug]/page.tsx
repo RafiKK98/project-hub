@@ -2,12 +2,18 @@
 
 import { RoleBadge } from "@/components/organizations/role-badge";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Tabs } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
+import { Badge } from "@/components/ui/shadcn/badge";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/shadcn/tabs";
 import {
   useCancelInvitation,
   useInviteMember,
@@ -32,7 +38,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { use, useState } from "react";
+import { Fragment, use, useState } from "react";
 import { useForm } from "react-hook-form";
 
 const ADMIN_ROLES = ["OWNER", "ADMIN", "MANAGER"];
@@ -45,10 +51,6 @@ export default function OrgPage({ params }: OrgPageProps) {
   const { slug } = use(params);
   const currentUser = useAuthStore((s) => s.user);
   const [showInviteForm, setShowInviteForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "projects">(
-    "projects",
-  );
-
   const { data: org, isLoading: orgLoading } = useOrganization(slug);
   const { data: members, isLoading: membersLoading } = useOrgMembers(
     org?.id ?? "",
@@ -109,7 +111,9 @@ export default function OrgPage({ params }: OrgPageProps) {
 
       <div className="mb-6 flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <Avatar name={org.name} size="lg" />
+          <Avatar size="md">
+            <AvatarFallback name={org.name} />
+          </Avatar>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -141,7 +145,7 @@ export default function OrgPage({ params }: OrgPageProps) {
 
       {/* Tabs */}
       <div className="mb-6">
-        <Tabs
+        {/* <Tabs
           tabs={[
             { key: "projects", label: "Projects" },
             { key: "overview", label: "Members" },
@@ -149,260 +153,277 @@ export default function OrgPage({ params }: OrgPageProps) {
           active={activeTab}
           onChange={(key) => setActiveTab(key as "overview" | "projects")}
         />
-      </div>
+         */}
+        <Tabs defaultValue="projects">
+          <TabsList variant="line">
+            <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsTrigger value="overview">Members</TabsTrigger>
+          </TabsList>
 
-      {/* Projects tab */}
-      {activeTab === "projects" && (
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              {projects?.length ?? 0}{" "}
-              {projects?.length === 1 ? "project" : "projects"}
-            </p>
-            <Link href={`/orgs/${slug}/projects/new`}>
-              <Button size="sm">
-                <Plus className="h-4 w-4" />
-                New project
-              </Button>
-            </Link>
-          </div>
-
-          {projectsLoading ? (
-            <div className="space-y-2">
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-16 animate-pulse rounded-lg border border-border bg-muted"
-                />
-              ))}
-            </div>
-          ) : projects?.length === 0 ? (
-            <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border py-16 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                <FolderKanban className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <div>
-                <p className="font-medium text-foreground">No projects yet</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Create your first project to start tracking work
+          {/* Projects tab */}
+          <TabsContent value="projects">
+            <section>
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {projects?.length ?? 0}{" "}
+                  {projects?.length === 1 ? "project" : "projects"}
                 </p>
+                <Link href={`/orgs/${slug}/projects/new`}>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4" />
+                    New project
+                  </Button>
+                </Link>
               </div>
-              <Link href={`/orgs/${slug}/projects/new`}>
-                <Button size="sm">
-                  <Plus className="h-4 w-4" />
-                  Create project
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {projects?.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/orgs/${slug}/projects/${project.identifier}`}
-                  className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-xs font-semibold text-muted-foreground">
-                    {project.identifier}
+
+              {projectsLoading ? (
+                <div className="space-y-2">
+                  {[...Array(3)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-16 animate-pulse rounded-lg border border-border bg-muted"
+                    />
+                  ))}
+                </div>
+              ) : projects?.length === 0 ? (
+                <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-border py-16 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                    <FolderKanban className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-foreground truncate">
-                        {project.name}
-                      </p>
-                      <ProjectStatusBadge status={project.status} />
-                    </div>
-                    {project.description && (
-                      <p className="mt-0.5 text-sm text-muted-foreground truncate">
-                        {project.description}
-                      </p>
-                    )}
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {project.memberCount}{" "}
-                      {project.memberCount === 1 ? "member" : "members"}
+                  <div>
+                    <p className="font-medium text-foreground">
+                      No projects yet
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Create your first project to start tracking work
                     </p>
                   </div>
-                  <span className="text-muted-foreground">→</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* Members tab */}
-      {activeTab === "overview" && (
-        <>
-          <section>
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                {members?.length ?? 0}{" "}
-                {members?.length === 1 ? "member" : "members"}
-              </p>
-              {canManage && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowInviteForm((v) => !v)}
-                >
-                  <UserPlus className="h-4 w-4" />
-                  Invite
-                </Button>
-              )}
-            </div>
-
-            {showInviteForm && (
-              <form
-                onSubmit={handleSubmit(onInvite)}
-                className="mb-4 flex gap-2 rounded-lg border border-border bg-muted/30 p-4"
-              >
-                <div className="flex-1">
-                  <Input
-                    placeholder="colleague@example.com"
-                    error={errors.email?.message}
-                    {...register("email")}
-                  />
+                  <Link href={`/orgs/${slug}/projects/new`}>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4" />
+                      Create project
+                    </Button>
+                  </Link>
                 </div>
-                <Select className="w-36" {...register("role")}>
-                  <option value="DEVELOPER">Developer</option>
-                  <option value="REPORTER">Reporter</option>
-                  <option value="MANAGER">Manager</option>
-                  <option value="ADMIN">Admin</option>
-                  <option value="GUEST">Guest</option>
-                </Select>
-                <Button
-                  type="submit"
-                  size="md"
-                  isLoading={inviteMember.isPending}
-                >
-                  Send
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="md"
-                  onClick={() => {
-                    setShowInviteForm(false);
-                    reset();
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </form>
-            )}
-
-            {membersLoading ? (
-              <div className="space-y-2">
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-14 animate-pulse rounded-lg border border-border bg-muted"
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="divide-y divide-border rounded-lg border border-border">
-                {members?.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center gap-3 px-4 py-3"
-                  >
-                    <Avatar
-                      name={member.user.name ?? member.user.email}
-                      size="sm"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {member.user.name ?? member.user.email}
-                        {member.user.id === currentUser?.id && (
-                          <span className="ml-1.5 text-xs text-muted-foreground">
-                            (you)
-                          </span>
+              ) : (
+                <div className="space-y-2">
+                  {projects?.map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/orgs/${slug}/projects/${project.identifier}`}
+                      className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted/50"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-xs font-semibold text-muted-foreground">
+                        {project.identifier.slice(0, 3)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground truncate">
+                            {project.name}
+                          </p>
+                          <ProjectStatusBadge status={project.status} />
+                        </div>
+                        {project.description && (
+                          <p className="mt-0.5 text-sm text-muted-foreground truncate">
+                            {project.description}
+                          </p>
                         )}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {member.user.email}
-                      </p>
-                    </div>
-                    <RoleBadge role={member.role} />
-                    {canManage &&
-                      member.user.id !== currentUser?.id &&
-                      member.role !== "OWNER" && (
-                        <button
-                          onClick={() => removeMember.mutate(member.user.id)}
-                          className="ml-2 text-muted-foreground hover:text-destructive transition-colors"
-                          aria-label="Remove member"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {invitations && invitations.length > 0 && (
-            <section className="mt-8">
-              <h2 className="mb-4 text-base font-medium text-foreground">
-                Pending Invitations
-              </h2>
-              <div className="divide-y divide-border rounded-lg border border-border">
-                {invitations.map((inv) => (
-                  <div
-                    key={inv.id}
-                    className="flex items-center gap-3 px-4 py-3"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">
-                        {inv.email}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Invited by {inv.invitedBy.name ?? inv.invitedBy.email} ·
-                        Expires {new Date(inv.expiresAt).toLocaleDateString()}
-                      </p>
-                      <button
-                        onClick={() => {
-                          const link = `${window.location.origin}/invitations/${inv.id}`;
-                          navigator.clipboard
-                            .writeText(link)
-                            .then(() => {
-                              const btn = document.getElementById(
-                                `copy-${inv.id}`,
-                              );
-                              if (btn) {
-                                btn.textContent = "Copied!";
-                                setTimeout(() => {
-                                  if (btn) btn.textContent = "Copy invite link";
-                                }, 2000);
-                              }
-                            })
-                            .catch(() => {});
-                        }}
-                        id={`copy-${inv.id}`}
-                        className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-                      >
-                        Copy invite link
-                      </button>
-                    </div>
-                    <Badge variant="warning">Pending</Badge>
-                    <RoleBadge role={inv.role} />
-                    {canManage && (
-                      <button
-                        onClick={() => cancelInvitation.mutate(inv.id)}
-                        className="ml-2 text-muted-foreground hover:text-destructive transition-colors"
-                        aria-label="Cancel invitation"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {project.memberCount}{" "}
+                          {project.memberCount === 1 ? "member" : "members"}
+                        </p>
+                      </div>
+                      <span className="text-muted-foreground">→</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </section>
-          )}
-        </>
-      )}
+          </TabsContent>
+          {/* Members tab */}
+          <TabsContent value="overview">
+            <Fragment>
+              <section>
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {members?.length ?? 0}{" "}
+                    {members?.length === 1 ? "member" : "members"}
+                  </p>
+                  {canManage && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowInviteForm((v) => !v)}
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      Invite
+                    </Button>
+                  )}
+                </div>
+
+                {showInviteForm && (
+                  <form
+                    onSubmit={handleSubmit(onInvite)}
+                    className="mb-4 flex gap-2 rounded-lg border border-border bg-muted/30 p-4"
+                  >
+                    <div className="flex-1">
+                      <Input
+                        placeholder="colleague@example.com"
+                        error={errors.email?.message}
+                        {...register("email")}
+                      />
+                    </div>
+                    <Select className="w-36" {...register("role")}>
+                      <option value="DEVELOPER">Developer</option>
+                      <option value="REPORTER">Reporter</option>
+                      <option value="MANAGER">Manager</option>
+                      <option value="ADMIN">Admin</option>
+                      <option value="GUEST">Guest</option>
+                    </Select>
+                    <Button
+                      type="submit"
+                      size="default"
+                      disabled={inviteMember.isPending}
+                    >
+                      Send
+                      {inviteMember.isPending && (
+                        <Spinner data-icon="inline-start" />
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setShowInviteForm(false);
+                        reset();
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </form>
+                )}
+
+                {membersLoading ? (
+                  <div className="space-y-2">
+                    {[...Array(3)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-14 animate-pulse rounded-lg border border-border bg-muted"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border rounded-lg border border-border">
+                    {members?.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center gap-3 px-4 py-3"
+                      >
+                        <Avatar size="md">
+                          <AvatarFallback
+                            name={member.user.name ?? member.user.email}
+                          />
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {member.user.name ?? member.user.email}
+                            {member.user.id === currentUser?.id && (
+                              <span className="ml-1.5 text-xs text-muted-foreground">
+                                (you)
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {member.user.email}
+                          </p>
+                        </div>
+                        <RoleBadge role={member.role} />
+                        {canManage &&
+                          member.user.id !== currentUser?.id &&
+                          member.role !== "OWNER" && (
+                            <button
+                              onClick={() =>
+                                removeMember.mutate(member.user.id)
+                              }
+                              className="ml-2 text-muted-foreground hover:text-destructive transition-colors"
+                              aria-label="Remove member"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {invitations && invitations.length > 0 && (
+                <section className="mt-8">
+                  <h2 className="mb-4 text-base font-medium text-foreground">
+                    Pending Invitations
+                  </h2>
+                  <div className="divide-y divide-border rounded-lg border border-border">
+                    {invitations.map((inv) => (
+                      <div
+                        key={inv.id}
+                        className="flex items-center gap-3 px-4 py-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground">
+                            {inv.email}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Invited by{" "}
+                            {inv.invitedBy.name ?? inv.invitedBy.email} ·
+                            Expires{" "}
+                            {new Date(inv.expiresAt).toLocaleDateString()}
+                          </p>
+                          <button
+                            onClick={() => {
+                              const link = `${window.location.origin}/invitations/${inv.id}`;
+                              navigator.clipboard
+                                .writeText(link)
+                                .then(() => {
+                                  const btn = document.getElementById(
+                                    `copy-${inv.id}`,
+                                  );
+                                  if (btn) {
+                                    btn.textContent = "Copied!";
+                                    setTimeout(() => {
+                                      if (btn)
+                                        btn.textContent = "Copy invite link";
+                                    }, 2000);
+                                  }
+                                })
+                                .catch(() => {});
+                            }}
+                            id={`copy-${inv.id}`}
+                            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                          >
+                            Copy invite link
+                          </button>
+                        </div>
+                        <Badge variant="warning">Pending</Badge>
+                        <RoleBadge role={inv.role} />
+                        {canManage && (
+                          <button
+                            onClick={() => cancelInvitation.mutate(inv.id)}
+                            className="ml-2 text-muted-foreground hover:text-destructive transition-colors"
+                            aria-label="Cancel invitation"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </Fragment>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

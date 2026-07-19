@@ -1,8 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateOrganization } from "@/hooks/use-organizations";
 import {
@@ -79,8 +80,9 @@ export default function NewOrgPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" isLoading={createOrg.isPending}>
+          <Button type="submit" disabled={createOrg.isPending}>
             Create organization
+            {createOrg.isPending && <Spinner data-icon="inline-start" />}
           </Button>
         </div>
       </form>

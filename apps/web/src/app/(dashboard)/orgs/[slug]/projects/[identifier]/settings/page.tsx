@@ -1,9 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
@@ -115,10 +116,12 @@ export default function ProjectSettingsPage({
             <div className="flex justify-end">
               <Button
                 type="submit"
-                isLoading={updateProject.isPending}
-                disabled={!isDirty}
+                disabled={updateProject.isPending || !isDirty}
               >
                 Save changes
+                {updateProject.isPending && (
+                  <Spinner data-icon="inline-start" />
+                )}
               </Button>
             </div>
           </form>
@@ -148,10 +151,13 @@ export default function ProjectSettingsPage({
                 <Button
                   variant="destructive"
                   size="sm"
-                  isLoading={deleteProject.isPending}
+                  disabled={deleteProject.isPending}
                   onClick={() => deleteProject.mutate(project.id)}
                 >
                   Yes, delete
+                  {deleteProject.isPending && (
+                    <Spinner data-icon="inline-start" />
+                  )}
                 </Button>
                 <Button
                   variant="outline"

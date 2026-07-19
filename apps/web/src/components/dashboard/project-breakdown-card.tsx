@@ -44,7 +44,7 @@ export function ProjectBreakdownCard({ breakdown }: ProjectBreakdownCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs font-semibold text-muted-foreground">
-            {breakdown.projectIdentifier}
+            {breakdown.projectIdentifier.slice(0, 3)}
           </span>
           <span className="text-sm font-medium text-foreground">
             {breakdown.projectName}

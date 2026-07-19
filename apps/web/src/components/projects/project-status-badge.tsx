@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/shadcn/badge";
 import { ProjectStatus } from "@projecthub/types";
 
 const STATUS_CONFIG: Record<

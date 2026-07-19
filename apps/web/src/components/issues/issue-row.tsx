@@ -1,6 +1,6 @@
+import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
 import { IssueDto } from "@projecthub/types";
 import Link from "next/link";
-import { Avatar } from "../ui/avatar";
 import { PriorityIcon } from "./priority-icon";
 import { StatusIcon } from "./status-icon";
 
@@ -36,10 +36,11 @@ export function IssueRow({
       )}
       <div className="shrink-0">
         {issue.assignee ? (
-          <Avatar
-            name={issue.assignee.name ?? issue.assignee.email}
-            size="sm"
-          />
+          <Avatar size="sm">
+            <AvatarFallback
+              name={issue.assignee.name ?? issue.assignee.email}
+            />
+          </Avatar>
         ) : (
           <div className="h-7 w-7 rounded-full border border-dashed border-border" />
         )}

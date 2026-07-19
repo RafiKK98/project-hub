@@ -1,10 +1,11 @@
 "use client";
 
+import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
+import { Button } from "@/components/ui/shadcn/button";
+import { Spinner } from "@/components/ui/shadcn/spinner";
 import { useDeleteComment, useUpdateComment } from "@/hooks/use-comments";
 import { CommentDto } from "@projecthub/types";
 import { useState } from "react";
-import { Avatar } from "../ui/avatar";
-import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 
 function timeAgo(dateStr: string): string {
@@ -58,7 +59,9 @@ export function CommentItem({
   }
   return (
     <div className="flex gap-3">
-      <Avatar name={comment.author.name ?? comment.author.email} size="sm" />
+      <Avatar size="sm">
+        <AvatarFallback name={comment.author.name ?? comment.author.email} />
+      </Avatar>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground">
@@ -83,10 +86,13 @@ export function CommentItem({
             <div className="flex gap-2">
               <Button
                 size="sm"
-                isLoading={updateComment.isPending}
+                disabled={updateComment.isPending}
                 onClick={handleSave}
               >
                 Save
+                {updateComment.isPending && (
+                  <Spinner data-icon="inline-start" />
+                )}
               </Button>
               <Button size="sm" variant="outline" onClick={handleCancel}>
                 Cancel

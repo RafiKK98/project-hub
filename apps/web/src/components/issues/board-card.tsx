@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -78,10 +78,11 @@ export function BoardCard({
           <span />
         )}
         {issue.assignee ? (
-          <Avatar
-            name={issue.assignee.name ?? issue.assignee.email}
-            size="sm"
-          />
+          <Avatar size="sm">
+            <AvatarFallback
+              name={issue.assignee.name ?? issue.assignee.email}
+            />
+          </Avatar>
         ) : (
           <div className="h-6 w-6 rounded-full border border-dashed border-border" />
         )}

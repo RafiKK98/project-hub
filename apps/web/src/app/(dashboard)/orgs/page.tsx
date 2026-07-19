@@ -1,8 +1,8 @@
 "use client";
 
 import { RoleBadge } from "@/components/organizations/role-badge";
-import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
+import { Button } from "@/components/ui/shadcn/button";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { Building2, Plus } from "lucide-react";
 import Link from "next/link";
@@ -64,7 +64,9 @@ export default function OrgsPage() {
               href={`/orgs/${org.slug}`}
               className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted/50"
             >
-              <Avatar name={org.name} size="lg" />
+              <Avatar size="md">
+                <AvatarFallback name={org.name} />
+              </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-foreground truncate">
