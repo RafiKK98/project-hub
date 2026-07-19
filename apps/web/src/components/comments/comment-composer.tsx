@@ -1,10 +1,10 @@
 import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
 import { Button } from "@/components/ui/shadcn/button";
 import { Spinner } from "@/components/ui/shadcn/spinner";
+import { Textarea } from "@/components/ui/shadcn/textarea";
 import { useCreateComment } from "@/hooks/use-comments";
 import { useAuthStore } from "@/store/auth.store";
 import { SubmitEvent, useState } from "react";
-import { Textarea } from "../ui/textarea";
 
 interface CommentComposerProps {
   orgId: string;

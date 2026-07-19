@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/shadcn/avatar";
 import { Button } from "@/components/ui/shadcn/button";
 import { Spinner } from "@/components/ui/shadcn/spinner";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/shadcn/textarea";
 import { useDeleteIssue, useIssue, useUpdateIssue } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
@@ -167,8 +167,8 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
             onChange={(e) => setDescDraft(e.target.value)}
             onBlur={commitDescription}
             placeholder="Add a description..."
-            rows={8}
-            className="border-none bg-transparent px-0 text-sm focus-visible:ring-0"
+            rows={12}
+            className="bg-transparent text-sm min-h-28"
           />
 
           {/* Comments */}

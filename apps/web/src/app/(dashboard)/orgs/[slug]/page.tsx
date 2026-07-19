@@ -2,8 +2,14 @@
 
 import { RoleBadge } from "@/components/organizations/role-badge";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Input } from "@/components/ui/shadcn/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/shadcn/select";
 import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { Button } from "@/components/ui/shadcn/button";
@@ -39,7 +45,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Fragment, use, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 const ADMIN_ROLES = ["OWNER", "ADMIN", "MANAGER"];
 
@@ -68,6 +74,7 @@ export default function OrgPage({ params }: OrgPageProps) {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<InviteMemberFormValues>({
     resolver: zodResolver(inviteMemberSchema),
@@ -269,17 +276,42 @@ export default function OrgPage({ params }: OrgPageProps) {
                     <div className="flex-1">
                       <Input
                         placeholder="colleague@example.com"
-                        error={errors.email?.message}
+                        aria-invalid={!!errors.email}
                         {...register("email")}
                       />
+                      {errors.email?.message && (
+                        <p className="text-xs text-destructive">
+                          {errors.email.message}
+                        </p>
+                      )}
                     </div>
-                    <Select className="w-36" {...register("role")}>
-                      <option value="DEVELOPER">Developer</option>
-                      <option value="REPORTER">Reporter</option>
-                      <option value="MANAGER">Manager</option>
-                      <option value="ADMIN">Admin</option>
-                      <option value="GUEST">Guest</option>
-                    </Select>
+                    <Controller
+                      name="role"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger className="w-36">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="DEVELOPER">
+                              Developer
+                            </SelectItem>
+                            <SelectItem value="REPORTER">
+                              Reporter
+                            </SelectItem>
+                            <SelectItem value="MANAGER">
+                              Manager
+                            </SelectItem>
+                            <SelectItem value="ADMIN">Admin</SelectItem>
+                            <SelectItem value="GUEST">Guest</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                     <Button
                       type="submit"
                       size="default"

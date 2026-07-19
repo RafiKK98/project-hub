@@ -1,8 +1,8 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/shadcn/button";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
 import { Spinner } from "@/components/ui/shadcn/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -51,8 +51,8 @@ export default function LoginPage() {
         noValidate
       >
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email" required>
-            Email
+          <Label htmlFor="email">
+            Email <span className="text-destructive">*</span>
           </Label>
           <Input
             id="email"
@@ -60,15 +60,18 @@ export default function LoginPage() {
             placeholder="you@example.com"
             autoComplete="email"
             autoFocus
-            error={errors.email?.message}
+            aria-invalid={!!errors.email}
             {...register("email")}
           />
+          {errors.email?.message && (
+            <p className="text-xs text-destructive">{errors.email.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" required>
-              Password
+            <Label htmlFor="password">
+              Password <span className="text-destructive">*</span>
             </Label>
             <Link
               href="/forgot-password"
@@ -83,7 +86,7 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               autoComplete="current-password"
-              error={errors.password?.message}
+              aria-invalid={!!errors.password}
               className="pr-10"
               {...register("password")}
             />
@@ -92,7 +95,7 @@ export default function LoginPage() {
               size="icon"
               variant="ghost"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground hover:bg-transparent"
+              className="absolute right-0 text-muted-foreground hover:text-foreground hover:bg-transparent"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
@@ -102,6 +105,11 @@ export default function LoginPage() {
               )}
             </Button>
           </div>
+          {errors.password?.message && (
+            <p className="text-xs text-destructive">
+              {errors.password.message}
+            </p>
+          )}
         </div>
 
         <Button

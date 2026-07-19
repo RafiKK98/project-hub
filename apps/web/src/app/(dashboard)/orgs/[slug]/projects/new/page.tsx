@@ -1,9 +1,9 @@
 "use client";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
 import { Button } from "@/components/ui/shadcn/button";
 import { Spinner } from "@/components/ui/shadcn/spinner";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/shadcn/textarea";
 import { useOrganization } from "@/hooks/use-organizations";
 import { useCreateProject } from "@/hooks/use-projects";
 import {
@@ -63,30 +63,40 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name" required>
-            Project name
+          <Label htmlFor="name">
+            Project name <span className="text-destructive">*</span>
           </Label>
           <Input
             id="name"
             placeholder="Website Redesign"
             autoFocus
-            error={errors.name?.message}
+            aria-invalid={!!errors.name}
             {...register("name")}
           />
+          {errors.name?.message && (
+            <p className="text-xs text-destructive">
+              {errors.name.message}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="identifier" required>
-            Project identifier
+          <Label htmlFor="identifier">
+            Project identifier <span className="text-destructive">*</span>
           </Label>
           <Input
             id="identifier"
             placeholder="WEB"
             className="font-mono uppercase"
             maxLength={6}
-            error={errors.identifier?.message}
+            aria-invalid={!!errors.identifier}
             {...register("identifier")}
           />
+          {errors.identifier?.message && (
+            <p className="text-xs text-destructive">
+              {errors.identifier.message}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             Used to prefix issues, e.g. {identifierValue.toUpperCase()}-1
             {nameValue ? "" : ""}
@@ -98,9 +108,14 @@ export default function NewProjectPage({ params }: NewProjectPageProps) {
           <Textarea
             id="description"
             placeholder="What is this project about?"
-            error={errors.description?.message}
+            aria-invalid={!!errors.description}
             {...register("description")}
           />
+          {errors.description?.message && (
+            <p className="text-xs text-destructive">
+              {errors.description.message}
+            </p>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-2">

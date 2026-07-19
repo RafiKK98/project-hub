@@ -1,6 +1,7 @@
 "use client";
 
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { Separator } from "@/components/ui/shadcn/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useAuthStore } from "@/store/auth.store";
@@ -9,7 +10,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 import { ThemeToggle } from "../theme-toggle";
-import { Separator } from "../ui/shadcn/separator";
 import { UserMenu } from "./user-menu";
 
 export function TopNav() {

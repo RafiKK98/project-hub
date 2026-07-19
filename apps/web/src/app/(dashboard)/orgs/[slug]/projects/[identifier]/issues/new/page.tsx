@@ -4,12 +4,12 @@ import {
   PRIORITY_OPTIONS,
   getPriorityLabel,
 } from "@/components/issues/priority-icon";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/shadcn/button";
 import { Spinner } from "@/components/ui/shadcn/spinner";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/shadcn/textarea";
 import { useCreateIssue } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
@@ -81,16 +81,21 @@ export default function NewIssuePage({ params }: NewIssuePageProps) {
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="title" required>
-            Title
+          <Label htmlFor="title">
+            Title <span className="text-destructive">*</span>
           </Label>
           <Input
             id="title"
             placeholder="Fix login button alignment on mobile"
             autoFocus
-            error={errors.title?.message}
+            aria-invalid={!!errors.title}
             {...register("title")}
           />
+          {errors.title?.message && (
+            <p className="text-xs text-destructive">
+              {errors.title.message}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -99,9 +104,14 @@ export default function NewIssuePage({ params }: NewIssuePageProps) {
             id="description"
             placeholder="Add more details..."
             rows={4}
-            error={errors.description?.message}
+            aria-invalid={!!errors.description}
             {...register("description")}
           />
+          {errors.description?.message && (
+            <p className="text-xs text-destructive">
+              {errors.description.message}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">

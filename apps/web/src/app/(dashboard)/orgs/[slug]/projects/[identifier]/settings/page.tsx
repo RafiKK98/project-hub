@@ -1,11 +1,11 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/shadcn/button";
 import { Spinner } from "@/components/ui/shadcn/spinner";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/shadcn/textarea";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
   useDeleteProject,
@@ -85,23 +85,33 @@ export default function ProjectSettingsPage({
             className="flex flex-col gap-5"
           >
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="name" required>
-                Project name
+              <Label htmlFor="name">
+                Project name <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="name"
-                error={errors.name?.message}
+                aria-invalid={!!errors.name}
                 {...register("name")}
               />
+              {errors.name?.message && (
+                <p className="text-xs text-destructive">
+                  {errors.name.message}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                error={errors.description?.message}
+                aria-invalid={!!errors.description}
                 {...register("description")}
               />
+              {errors.description?.message && (
+                <p className="text-xs text-destructive">
+                  {errors.description.message}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5">

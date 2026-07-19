@@ -1,10 +1,10 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
 import { Button } from "@/components/ui/shadcn/button";
 import { Spinner } from "@/components/ui/shadcn/spinner";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/shadcn/textarea";
 import { useCreateOrganization } from "@/hooks/use-organizations";
 import {
   createOrgSchema,
@@ -52,16 +52,21 @@ export default function NewOrgPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name" required>
-            Organization name
+          <Label htmlFor="name">
+            Organization name <span className="text-destructive">*</span>
           </Label>
           <Input
             id="name"
             placeholder="Acme Corp"
             autoFocus
-            error={errors.name?.message}
+            aria-invalid={!!errors.name}
             {...register("name")}
           />
+          {errors.name?.message && (
+            <p className="text-xs text-destructive">
+              {errors.name.message}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -69,9 +74,14 @@ export default function NewOrgPage() {
           <Textarea
             id="description"
             placeholder="What does your organization do?"
-            error={errors.description?.message}
+            aria-invalid={!!errors.description}
             {...register("description")}
           />
+          {errors.description?.message && (
+            <p className="text-xs text-destructive">
+              {errors.description.message}
+            </p>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-2">

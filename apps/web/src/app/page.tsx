@@ -152,8 +152,6 @@ const FEATURES = [
 
 function LandingNav({ isAuthenticated }: { isAuthenticated: boolean }) {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
   return (
     <nav className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background/80 px-6 backdrop-blur-md">
@@ -165,20 +163,15 @@ function LandingNav({ isAuthenticated }: { isAuthenticated: boolean }) {
       </Link>
 
       <div className="ml-auto flex items-center gap-2">
-        {mounted && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          aria-label="Toggle theme"
+        >
+          <Sun className="h-4 w-4 dark:hidden" />
+          <Moon className="hidden h-4 w-4 dark:block" />
+        </Button>
         {isAuthenticated ? (
           <Button asChild size="sm">
             <Link href="/dashboard">

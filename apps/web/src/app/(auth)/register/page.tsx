@@ -1,8 +1,8 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/shadcn/button";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
 import { Spinner } from "@/components/ui/shadcn/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -51,8 +51,8 @@ export default function RegisterPage() {
         noValidate
       >
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name" required>
-            Full name
+          <Label htmlFor="name">
+            Full name <span className="text-destructive">*</span>
           </Label>
           <Input
             id="name"
@@ -60,28 +60,34 @@ export default function RegisterPage() {
             placeholder="Jane Doe"
             autoComplete="name"
             autoFocus
-            error={errors.name?.message}
+            aria-invalid={!!errors.name}
             {...register("name")}
           />
+          {errors.name?.message && (
+            <p className="text-xs text-destructive">{errors.name.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email" required>
-            Email
+          <Label htmlFor="email">
+            Email <span className="text-destructive">*</span>
           </Label>
           <Input
             id="email"
             type="email"
             placeholder="you@example.com"
             autoComplete="email"
-            error={errors.email?.message}
+            aria-invalid={!!errors.email}
             {...register("email")}
           />
+          {errors.email?.message && (
+            <p className="text-xs text-destructive">{errors.email.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password" required>
-            Password
+          <Label htmlFor="password">
+            Password <span className="text-destructive">*</span>
           </Label>
           <div className="relative">
             <Input
@@ -89,7 +95,7 @@ export default function RegisterPage() {
               type={showPassword ? "text" : "password"}
               placeholder="Min. 8 characters"
               autoComplete="new-password"
-              error={errors.password?.message}
+              aria-invalid={!!errors.password}
               className="pr-10"
               {...register("password")}
             />
@@ -98,7 +104,7 @@ export default function RegisterPage() {
               size="icon"
               variant="ghost"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground hover:bg-transparent"
+              className="absolute right-0 text-muted-foreground hover:text-foreground hover:bg-transparent"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
@@ -108,9 +114,15 @@ export default function RegisterPage() {
               )}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Must be 8+ characters with uppercase, lowercase, and a number
-          </p>
+          {errors.password?.message ? (
+            <p className="text-xs text-destructive">
+              {errors.password.message}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Must be 8+ characters with uppercase, lowercase, and a number
+            </p>
+          )}
         </div>
 
         <Button

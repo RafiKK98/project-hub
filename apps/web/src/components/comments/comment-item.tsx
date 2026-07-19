@@ -3,10 +3,10 @@
 import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
 import { Button } from "@/components/ui/shadcn/button";
 import { Spinner } from "@/components/ui/shadcn/spinner";
+import { Textarea } from "@/components/ui/shadcn/textarea";
 import { useDeleteComment, useUpdateComment } from "@/hooks/use-comments";
 import { CommentDto } from "@projecthub/types";
 import { useState } from "react";
-import { Textarea } from "../ui/textarea";
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
