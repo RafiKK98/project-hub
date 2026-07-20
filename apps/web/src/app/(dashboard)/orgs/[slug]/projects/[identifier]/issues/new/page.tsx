@@ -28,6 +28,7 @@ import {
 } from "@/lib/validations/issue.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateIssuePayload } from "@projecthub/types";
+import { DatePicker } from "@/components/ui/date-picker";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
@@ -168,7 +169,19 @@ export default function NewIssuePage({ params }: NewIssuePageProps) {
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="dueDate">Due date</Label>
-          <Input id="dueDate" type="date" {...register("dueDate")} />
+          <Controller
+            name="dueDate"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                id="dueDate"
+                value={field.value ? new Date(field.value) : null}
+                onChange={(date) =>
+                  field.onChange(date ? date.toLocaleDateString("en-CA") : "")
+                }
+              />
+            )}
+          />
         </div>
 
         <div className="flex justify-end gap-3 pt-2">

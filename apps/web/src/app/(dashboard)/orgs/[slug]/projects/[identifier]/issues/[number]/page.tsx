@@ -28,6 +28,7 @@ import {
 } from "@/hooks/use-projects";
 import { getInitials } from "@/lib/utils";
 import type { IssuePriority, IssueStatus } from "@projecthub/types";
+import { DatePicker } from "@/components/ui/date-picker";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { use, useState } from "react";
@@ -261,13 +262,15 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">
               Due date
             </p>
-            <input
-              type="date"
-              value={issue.dueDate ? issue.dueDate.slice(0, 10) : ""}
-              onChange={(e) =>
-                updateIssue.mutate({ dueDate: e.target.value || null })
+            <DatePicker
+              value={issue.dueDate ? new Date(issue.dueDate) : null}
+              onChange={(date) =>
+                updateIssue.mutate({
+                  dueDate: date
+                    ? date.toLocaleDateString("en-CA")
+                    : null,
+                })
               }
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
