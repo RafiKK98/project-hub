@@ -1,10 +1,10 @@
 "use client";
 
-import { Input } from "@/components/ui/shadcn/input";
-import { Label } from "@/components/ui/shadcn/label";
-import { Button } from "@/components/ui/shadcn/button";
-import { Spinner } from "@/components/ui/shadcn/spinner";
-import { Textarea } from "@/components/ui/shadcn/textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useDeleteOrganization,
   useOrganization,

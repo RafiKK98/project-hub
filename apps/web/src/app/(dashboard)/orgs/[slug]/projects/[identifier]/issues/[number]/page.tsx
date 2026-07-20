@@ -9,15 +9,17 @@ import {
   getStatusLabel,
   STATUS_OPTIONS,
 } from "@/components/issues/status-icon";
-import { Select } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/shadcn/avatar";
-import { Button } from "@/components/ui/shadcn/button";
-import { Spinner } from "@/components/ui/shadcn/spinner";
-import { Textarea } from "@/components/ui/shadcn/textarea";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
 import { useDeleteIssue, useIssue, useUpdateIssue } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
@@ -189,15 +191,20 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
             </p>
             <Select
               value={issue.status}
-              onChange={(e) =>
-                updateIssue.mutate({ status: e.target.value as IssueStatus })
+              onValueChange={(value) =>
+                updateIssue.mutate({ status: value as IssueStatus })
               }
             >
-              {STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {getStatusLabel(s)}
-                </option>
-              ))}
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {getStatusLabel(s)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -207,17 +214,22 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
             </p>
             <Select
               value={issue.priority}
-              onChange={(e) =>
+              onValueChange={(value) =>
                 updateIssue.mutate({
-                  priority: e.target.value as IssuePriority,
+                  priority: value as IssuePriority,
                 })
               }
             >
-              {PRIORITY_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {getPriorityLabel(p)}
-                </option>
-              ))}
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_OPTIONS.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {getPriorityLabel(p)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
@@ -227,16 +239,21 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
             </p>
             <Select
               value={issue.assignee?.id ?? ""}
-              onChange={(e) =>
-                updateIssue.mutate({ assigneeId: e.target.value || null })
+              onValueChange={(value) =>
+                updateIssue.mutate({ assigneeId: value || null })
               }
             >
-              <option value="">Unassigned</option>
-              {members?.map((m) => (
-                <option key={m.user.id} value={m.user.id}>
-                  {m.user.name ?? m.user.email}
-                </option>
-              ))}
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Unassigned</SelectItem>
+                {members?.map((m) => (
+                  <SelectItem key={m.user.id} value={m.user.id}>
+                    {m.user.name ?? m.user.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 

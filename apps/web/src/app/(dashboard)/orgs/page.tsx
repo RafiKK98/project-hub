@@ -1,8 +1,8 @@
 "use client";
 
 import { RoleBadge } from "@/components/organizations/role-badge";
-import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
-import { Button } from "@/components/ui/shadcn/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { Building2, Plus } from "lucide-react";
 import Link from "next/link";

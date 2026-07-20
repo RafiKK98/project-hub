@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/shadcn/button";
-import { Spinner } from "@/components/ui/shadcn/spinner";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { orgKeys } from "@/hooks/use-organizations";
 import { apiClient, ApiClientError } from "@/lib/api-client";
 import { useAuthStore } from "@/store/auth.store";

@@ -1,9 +1,9 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
-import { Button } from "@/components/ui/shadcn/button";
-import { Spinner } from "@/components/ui/shadcn/spinner";
-import { Textarea } from "@/components/ui/shadcn/textarea";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
 import { useDeleteComment, useUpdateComment } from "@/hooks/use-comments";
 import { CommentDto } from "@projecthub/types";
 import { useState } from "react";

@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { IssueDto } from "@projecthub/types";
 import Link from "next/link";
 import { PriorityIcon } from "./priority-icon";

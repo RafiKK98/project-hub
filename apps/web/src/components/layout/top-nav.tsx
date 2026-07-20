@@ -1,7 +1,7 @@
 "use client";
 
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { Separator } from "@/components/ui/shadcn/separator";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useAuthStore } from "@/store/auth.store";

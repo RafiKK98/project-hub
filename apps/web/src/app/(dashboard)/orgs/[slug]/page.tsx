@@ -2,24 +2,19 @@
 
 import { RoleBadge } from "@/components/organizations/role-badge";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
-import { Input } from "@/components/ui/shadcn/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/shadcn/select";
-import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
-import { Badge } from "@/components/ui/shadcn/badge";
-import { Button } from "@/components/ui/shadcn/button";
-import { Spinner } from "@/components/ui/shadcn/spinner";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/shadcn/tabs";
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useCancelInvitation,
   useInviteMember,
@@ -297,15 +292,9 @@ export default function OrgPage({ params }: OrgPageProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="DEVELOPER">
-                              Developer
-                            </SelectItem>
-                            <SelectItem value="REPORTER">
-                              Reporter
-                            </SelectItem>
-                            <SelectItem value="MANAGER">
-                              Manager
-                            </SelectItem>
+                            <SelectItem value="DEVELOPER">Developer</SelectItem>
+                            <SelectItem value="REPORTER">Reporter</SelectItem>
+                            <SelectItem value="MANAGER">Manager</SelectItem>
                             <SelectItem value="ADMIN">Admin</SelectItem>
                             <SelectItem value="GUEST">Guest</SelectItem>
                           </SelectContent>

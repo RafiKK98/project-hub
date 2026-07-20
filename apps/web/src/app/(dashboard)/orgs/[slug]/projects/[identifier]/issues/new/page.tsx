@@ -4,12 +4,18 @@ import {
   PRIORITY_OPTIONS,
   getPriorityLabel,
 } from "@/components/issues/priority-icon";
-import { Input } from "@/components/ui/shadcn/input";
-import { Label } from "@/components/ui/shadcn/label";
-import { Select } from "@/components/ui/select";
-import { Button } from "@/components/ui/shadcn/button";
-import { Spinner } from "@/components/ui/shadcn/spinner";
-import { Textarea } from "@/components/ui/shadcn/textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
 import { useCreateIssue } from "@/hooks/use-issues";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
@@ -25,7 +31,7 @@ import { CreateIssuePayload } from "@projecthub/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 interface NewIssuePageProps {
   params: Promise<{ slug: string; identifier: string }>;
@@ -46,6 +52,7 @@ export default function NewIssuePage({ params }: NewIssuePageProps) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<CreateIssueFormValues>({
     resolver: zodResolver(createIssueSchema),
@@ -92,9 +99,7 @@ export default function NewIssuePage({ params }: NewIssuePageProps) {
             {...register("title")}
           />
           {errors.title?.message && (
-            <p className="text-xs text-destructive">
-              {errors.title.message}
-            </p>
+            <p className="text-xs text-destructive">{errors.title.message}</p>
           )}
         </div>
 
@@ -117,25 +122,47 @@ export default function NewIssuePage({ params }: NewIssuePageProps) {
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="priority">Priority</Label>
-            <Select id="priority" {...register("priority")}>
-              {PRIORITY_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {getPriorityLabel(p)}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              name="priority"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value!} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRIORITY_OPTIONS.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {getPriorityLabel(p)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="assigneeId">Assignee</Label>
-            <Select id="assigneeId" {...register("assigneeId")}>
-              <option value="">Unassigned</option>
-              {members?.map((m) => (
-                <option key={m.user.id} value={m.user.id}>
-                  {m.user.name ?? m.user.email}
-                </option>
-              ))}
-            </Select>
+            <Controller
+              name="assigneeId"
+              control={control}
+              render={({ field }) => (
+                <Select value={field.value!} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Unassigned" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Unassigned</SelectItem>
+                    {members?.map((m) => (
+                      <SelectItem key={m.user.id} value={m.user.id}>
+                        {m.user.name ?? m.user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
         </div>
 

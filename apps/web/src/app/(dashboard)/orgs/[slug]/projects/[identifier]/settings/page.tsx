@@ -1,11 +1,17 @@
 "use client";
 
-import { Input } from "@/components/ui/shadcn/input";
-import { Label } from "@/components/ui/shadcn/label";
-import { Select } from "@/components/ui/select";
-import { Button } from "@/components/ui/shadcn/button";
-import { Spinner } from "@/components/ui/shadcn/spinner";
-import { Textarea } from "@/components/ui/shadcn/textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
 import { useOrganization } from "@/hooks/use-organizations";
 import {
   useDeleteProject,
@@ -21,7 +27,7 @@ import { UpdateProjectPayload } from "@projecthub/types";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 interface ProjectSettingsPageProps {
   params: Promise<{ slug: string; identifier: string }>;
@@ -42,6 +48,7 @@ export default function ProjectSettingsPage({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isDirty },
   } = useForm<UpdateProjectFormValues>({
     resolver: zodResolver(updateProjectSchema),
@@ -114,13 +121,24 @@ export default function ProjectSettingsPage({
               )}
             </div>
 
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 max-w-32">
               <Label htmlFor="status">Status</Label>
-              <Select id="status" {...register("status")}>
-                <option value="ACTIVE">Active</option>
-                <option value="PAUSED">Paused</option>
-                <option value="ARCHIVED">Archived</option>
-              </Select>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value!} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ACTIVE">Active</SelectItem>
+                      <SelectItem value="PAUSED">Paused</SelectItem>
+                      <SelectItem value="ARCHIVED">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             <div className="flex justify-end">

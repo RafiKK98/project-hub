@@ -1,8 +1,8 @@
 "use client";
 
-import { Badge } from "@/components/ui/shadcn/badge";
-import { Button } from "@/components/ui/shadcn/button";
-import { Separator } from "@/components/ui/shadcn/separator";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/store/auth.store";
 import {
   ArrowRight,

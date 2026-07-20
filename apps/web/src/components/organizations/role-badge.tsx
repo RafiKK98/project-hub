@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/shadcn/badge";
+import { Badge } from "@/components/ui/badge";
 import { MemberRole } from "@projecthub/types";
 
 const ROLE_CONFIG: Record<
