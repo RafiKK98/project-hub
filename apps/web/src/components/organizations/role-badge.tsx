@@ -5,7 +5,15 @@ const ROLE_CONFIG: Record<
   MemberRole,
   {
     label: string;
-    variant: "default" | "secondary" | "success" | "warning" | "destructive";
+    variant:
+      | "default"
+      | "secondary"
+      | "destructive"
+      | "outline"
+      | "ghost"
+      | "link"
+      | "warning"
+      | "success";
   }
 > = {
   OWNER: { label: "Owner", variant: "default" },

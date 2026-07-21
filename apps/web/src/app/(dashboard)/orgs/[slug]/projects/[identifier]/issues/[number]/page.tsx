@@ -11,6 +11,8 @@ import {
 } from "@/components/issues/status-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
+import { LazyRichTextEditor, RichTextRenderer } from "@/components/ui/editor";
 import {
   Select,
   SelectContent,
@@ -28,10 +30,9 @@ import {
 } from "@/hooks/use-projects";
 import { getInitials } from "@/lib/utils";
 import type { IssuePriority, IssueStatus } from "@projecthub/types";
-import { DatePicker } from "@/components/ui/date-picker";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { use, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 
 interface IssueDetailPageProps {
   params: Promise<{ slug: string; identifier: string; number: string }>;
@@ -43,7 +44,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [descDraft, setDescDraft] = useState("");
-  const [prevIssueId, setPrevIssueId] = useState<string | undefined>();
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
 
   const { data: org } = useOrganization(slug);
   const { data: project } = useProjectByIdentifier(org?.id ?? "", identifier);
@@ -65,20 +66,27 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
     identifier,
   );
 
-  if (issue && issue.id !== prevIssueId) {
-    setPrevIssueId(issue.id);
-    setTitleDraft(issue.title);
-    setDescDraft(issue.description ?? "");
-  }
+  useEffect(() => {
+    if (issue) {
+      setTitleDraft(issue.title);
+      setDescDraft(issue.description ?? "");
+    }
+  }, [issue]);
 
   function commitTitle() {
     if (issue && titleDraft.trim() && titleDraft !== issue.title)
       updateIssue.mutate({ title: titleDraft.trim() });
   }
 
-  function commitDescription() {
+  const handleDescriptionChange = useCallback(
+    (json: string) => setDescDraft(json),
+    [],
+  );
+
+  function saveDescription() {
     if (issue && descDraft !== (issue.description ?? ""))
       updateIssue.mutate({ description: descDraft });
+    setIsEditingDesc(false);
   }
 
   if (isLoading) {
@@ -154,25 +162,55 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       </div>
 
       {/* Title — inline editable */}
-      <textarea
+      <Textarea
         value={titleDraft}
         onChange={(e) => setTitleDraft(e.target.value)}
         onBlur={commitTitle}
         rows={1}
-        className="mb-6 w-full resize-none overflow-hidden border-none bg-transparent text-2xl font-semibold tracking-tight text-foreground outline-none focus:ring-0"
+        className="mb-6 w-full resize-none overflow-hidden border-none focus-visible:border-0 focus-visible:border-transparent bg-transparent text-2xl! font-semibold tracking-tight text-foreground outline-none focus:ring-0 focus-visible:ring-0"
       />
 
       <div className="grid grid-cols-[1fr_220px] gap-8">
         {/* Main content */}
         <div className="min-w-0">
-          <Textarea
-            value={descDraft}
-            onChange={(e) => setDescDraft(e.target.value)}
-            onBlur={commitDescription}
-            placeholder="Add a description..."
-            rows={12}
-            className="bg-transparent text-sm min-h-28"
-          />
+          {/* Description */}
+          <div className="mb-6">
+            {isEditingDesc ? (
+              <div className="flex flex-col gap-2">
+                <LazyRichTextEditor
+                  content={descDraft}
+                  onChange={handleDescriptionChange}
+                  placeholder="Add a description..."
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={saveDescription}>
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setDescDraft(issue.description ?? "");
+                      setIsEditingDesc(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="w-full text-left"
+                onClick={() => setIsEditingDesc(true)}
+                aria-label="Edit description"
+              >
+                <RichTextRenderer
+                  content={issue.description}
+                  className="min-h-20 rounded-lg border p-2 transition-colors hover:border-input hover:bg-muted/30"
+                />
+              </button>
+            )}
+          </div>
 
           {/* Comments */}
           {org && project && (
@@ -266,9 +304,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
               value={issue.dueDate ? new Date(issue.dueDate) : null}
               onChange={(date) =>
                 updateIssue.mutate({
-                  dueDate: date
-                    ? date.toLocaleDateString("en-CA")
-                    : null,
+                  dueDate: date ? date.toLocaleDateString("en-CA") : null,
                 })
               }
             />
