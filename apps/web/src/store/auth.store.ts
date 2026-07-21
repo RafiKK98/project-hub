@@ -15,6 +15,17 @@ interface AuthState {
   setUser: (user: AuthUser) => void;
 }
 
+function isTokenExpired(token?: string) {
+  if (!token) return true;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]!));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -36,6 +47,10 @@ export const useAuthStore = create<AuthState>()(
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (!state?.tokens?.accessToken) return;
+        if (isTokenExpired(state.tokens.accessToken)) state.clearSession();
+      },
     },
   ),
 );
