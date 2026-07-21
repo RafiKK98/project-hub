@@ -50,9 +50,6 @@ function ToolbarButton({
       title={title}
       className={cn(
         "flex h-7 w-7 items-center justify-center rounded text-sm transition-colors",
-        active
-          ? "bg-accent text-accent-foreground"
-          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
       )}
     >
       {children}

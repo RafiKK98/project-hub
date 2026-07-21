@@ -32,7 +32,7 @@ import { getInitials } from "@/lib/utils";
 import type { IssuePriority, IssueStatus } from "@projecthub/types";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useState } from "react";
 
 interface IssueDetailPageProps {
   params: Promise<{ slug: string; identifier: string; number: string }>;
@@ -45,6 +45,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
   const [titleDraft, setTitleDraft] = useState("");
   const [descDraft, setDescDraft] = useState("");
   const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [prevIssueId, setPrevIssueId] = useState<string | undefined>();
 
   const { data: org } = useOrganization(slug);
   const { data: project } = useProjectByIdentifier(org?.id ?? "", identifier);
@@ -66,12 +67,11 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
     identifier,
   );
 
-  useEffect(() => {
-    if (issue) {
-      setTitleDraft(issue.title);
-      setDescDraft(issue.description ?? "");
-    }
-  }, [issue]);
+  if (issue && issue.id !== prevIssueId) {
+    setPrevIssueId(issue.id);
+    setTitleDraft(issue.title);
+    setDescDraft(issue.description ?? "");
+  }
 
   function commitTitle() {
     if (issue && titleDraft.trim() && titleDraft !== issue.title)
@@ -89,7 +89,7 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
     setIsEditingDesc(false);
   }
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="mx-auto max-w-3xl px-4 py-12">
         <div className="space-y-4">
@@ -98,9 +98,8 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
         </div>
       </div>
     );
-  }
 
-  if (!issue) {
+  if (!issue)
     return (
       <div className="mx-auto max-w-3xl px-4 py-12 text-center">
         <p className="text-muted-foreground">Issue not found.</p>
@@ -112,7 +111,6 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
         </Link>
       </div>
     );
-  }
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
