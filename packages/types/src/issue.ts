@@ -4,6 +4,12 @@ export type IssueStatus =
 export type IssuePriority =
   "NO_PRIORITY" | "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
+export interface IssueLabel {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface IssueDto {
   id: string;
   number: number;
@@ -18,6 +24,7 @@ export interface IssueDto {
   dueDate: string | null;
   createdAt: string;
   updatedAt: string;
+  labels: IssueLabel[];
   createdBy: {
     id: string;
     name: string | null;

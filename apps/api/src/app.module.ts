@@ -12,6 +12,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { ProjectsModule } from './projects/projects.module';
 import { UsersModule } from './users/users.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { LabelsModule } from './labels/labels.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     CommentsModule,
     NotificationsModule,
     DashboardModule,
+    LabelsModule,
   ],
 })
 export class AppModule {}

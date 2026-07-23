@@ -24,6 +24,7 @@ const organizations_module_1 = require("./organizations/organizations.module");
 const projects_module_1 = require("./projects/projects.module");
 const users_module_1 = require("./users/users.module");
 const dashboard_module_1 = require("./dashboard/dashboard.module");
+const labels_module_1 = require("./labels/labels.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -47,6 +48,7 @@ exports.AppModule = AppModule = __decorate([
             comments_module_1.CommentsModule,
             notifications_module_1.NotificationsModule,
             dashboard_module_1.DashboardModule,
+            labels_module_1.LabelsModule,
         ],
     })
 ], AppModule);

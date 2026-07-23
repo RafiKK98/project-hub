@@ -4,6 +4,7 @@ export * from "./comment";
 export * from "./dashboard";
 export * from "./health";
 export * from "./issue";
+export * from "./label";
 export * from "./notification";
 export * from "./organizations";
 export * from "./permissions";

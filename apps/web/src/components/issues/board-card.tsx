@@ -6,6 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { IssueDto } from "@projecthub/types";
 import Link from "next/link";
+import { LabelChipList } from "../labels/label-chip";
 import { PriorityIcon } from "./priority-icon";
 
 interface BoardCardProps {
@@ -58,6 +59,7 @@ export function BoardCard({
         <PriorityIcon priority={issue.priority} />
       </div>
 
+      {/* Title */}
       <Link
         href={`/orgs/${orgSlug}/projects/${projectIdentifier}/issues/${issue.number}`}
         className="text-sm leading-snug text-foreground line-clamp-2 hover:underline"
@@ -66,6 +68,12 @@ export function BoardCard({
         {issue.title}
       </Link>
 
+      {/* Labels */}
+      {issue.labels.length > 0 && (
+        <LabelChipList labels={issue.labels} max={2} />
+      )}
+
+      {/* Footer */}
       <div className="flex items-center justify-between pt-1">
         {issue.dueDate ? (
           <span className="text-xs text-muted-foreground">

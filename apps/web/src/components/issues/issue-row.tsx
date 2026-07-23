@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { IssueDto } from "@projecthub/types";
 import Link from "next/link";
+import { LabelChipList } from "../labels/label-chip";
 import { PriorityIcon } from "./priority-icon";
 import { StatusIcon } from "./status-icon";
 
@@ -26,6 +27,12 @@ export function IssueRow({
       <span className="flex-1 truncate text-sm text-foreground">
         {issue.title}
       </span>
+
+      {/* Labels */}
+      {issue.labels.length > 0 && (
+        <LabelChipList labels={issue.labels} max={2} />
+      )}
+
       {issue.dueDate && (
         <span className="shrink-0 text-xs text-muted-foreground">
           {new Date(issue.dueDate).toLocaleDateString(undefined, {

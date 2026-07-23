@@ -3,12 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  IssuePriority,
-  MemberRole,
-  NotificationType,
-  Prisma,
-} from '@prisma/client';
+import { MemberRole, NotificationType, Prisma } from '@prisma/client';
 import { IssueDto, IssueFilters } from '@projecthub/types';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -22,6 +17,15 @@ const userSelect = {
   email: true,
   avatarUrl: true,
 } satisfies Prisma.UserSelect;
+
+const issueInclude = {
+  createdBy: { select: userSelect },
+  assignee: { select: userSelect },
+  labels: {
+    include: { label: { select: { id: true, name: true, color: true } } },
+    orderBy: { label: { name: 'asc' as const } },
+  },
+} satisfies Prisma.IssueInclude;
 
 @Injectable()
 export class IssuesService {
@@ -65,17 +69,14 @@ export class IssuesService {
             number: nextNumber,
             title: dto.title.trim(),
             description: dto.description?.trim(),
-            priority: dto.priority || IssuePriority.NO_PRIORITY,
+            priority: dto.priority,
             boardOrder,
             projectId,
             createdById: userId,
             assigneeId: dto.assigneeId,
             dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
           },
-          include: {
-            createdBy: { select: userSelect },
-            assignee: { select: userSelect },
-          },
+          include: issueInclude,
         });
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -124,10 +125,7 @@ export class IssuesService {
         }),
         ...(filters?.assigneeId && { assigneeId: filters.assigneeId }),
       },
-      include: {
-        createdBy: { select: userSelect },
-        assignee: { select: userSelect },
-      },
+      include: issueInclude,
       orderBy: { boardOrder: 'asc' },
     });
 
@@ -144,10 +142,7 @@ export class IssuesService {
 
     const issue = await this.prisma.issue.findUnique({
       where: { projectId_number: { projectId, number } },
-      include: {
-        createdBy: { select: userSelect },
-        assignee: { select: userSelect },
-      },
+      include: issueInclude,
     });
 
     if (!issue) throw new NotFoundException('Issue not found');
@@ -175,9 +170,8 @@ export class IssuesService {
     });
     if (!existing) throw new NotFoundException('Issue not found');
 
-    if (dto.assigneeId) {
+    if (dto.assigneeId)
       await this.assertProjectMember(projectId, dto.assigneeId);
-    }
 
     const issue = await this.prisma.issue.update({
       where: { id: existing.id },
@@ -193,10 +187,7 @@ export class IssuesService {
           dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
         }),
       },
-      include: {
-        createdBy: { select: userSelect },
-        assignee: { select: userSelect },
-      },
+      include: issueInclude,
     });
 
     const org = await this.prisma.organization.findFirst({
@@ -276,10 +267,7 @@ export class IssuesService {
         boardOrder: dto.boardOrder,
         ...(dto.status !== undefined && { status: dto.status }),
       },
-      include: {
-        createdBy: { select: userSelect },
-        assignee: { select: userSelect },
-      },
+      include: issueInclude,
     });
 
     return this.toIssueDto(issue, project.identifier);
@@ -336,9 +324,8 @@ export class IssuesService {
     const member = await this.prisma.projectMember.findUnique({
       where: { projectId_userId: { projectId, userId } },
     });
-    if (!member) {
+    if (!member)
       throw new NotFoundException('Assignee must be a member of this project');
-    }
   }
 
   private toIssueDto(
@@ -367,6 +354,7 @@ export class IssuesService {
         email: string;
         avatarUrl: string | null;
       } | null;
+      labels: { label: { id: string; name: string; color: string } }[];
     },
     projectIdentifier: string,
   ): IssueDto {
@@ -384,6 +372,7 @@ export class IssuesService {
       dueDate: issue.dueDate?.toISOString() ?? null,
       createdAt: issue.createdAt.toISOString(),
       updatedAt: issue.updatedAt.toISOString(),
+      labels: issue.labels.map((il) => il.label),
       createdBy: issue.createdBy,
       assignee: issue.assignee,
     };

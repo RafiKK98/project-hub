@@ -9,6 +9,8 @@ import {
   getStatusLabel,
   STATUS_OPTIONS,
 } from "@/components/issues/status-icon";
+import { LabelChipList } from "@/components/labels/label-chip";
+import { LabelPicker } from "@/components/labels/label-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -67,6 +69,8 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
     identifier,
   );
 
+  const canManageLabels = project?.currentUserRole === "MANAGER";
+
   if (issue && issue.id !== prevIssueId) {
     setPrevIssueId(issue.id);
     setTitleDraft(issue.title);
@@ -123,9 +127,12 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
       </Link>
 
       <div className="mb-6 flex items-center justify-between">
-        <span className="font-mono text-sm text-muted-foreground">
-          {issue.key}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm text-muted-foreground">
+            {issue.key}
+          </span>
+          {issue.labels.length > 0 && <LabelChipList labels={issue.labels} />}
+        </div>
         {confirmDelete ? (
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
@@ -294,6 +301,20 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
             </Select>
           </div>
 
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+              Labels
+            </p>
+            {org && project && (
+              <LabelPicker
+                orgId={org.id}
+                projectId={project.id}
+                issueNumber={issueNumber}
+                currentLabels={issue.labels}
+                canManage={canManageLabels}
+              />
+            )}
+          </div>
           <div>
             <p className="mb-1.5 text-xs font-medium text-muted-foreground">
               Due date

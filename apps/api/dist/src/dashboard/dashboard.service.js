@@ -20,6 +20,14 @@ const userSelect = {
     email: true,
     avatarUrl: true,
 };
+const issueInclude = {
+    createdBy: { select: userSelect },
+    assignee: { select: userSelect },
+    labels: {
+        include: { label: { select: { id: true, name: true, color: true } } },
+        orderBy: { label: { name: 'asc' } },
+    },
+};
 let DashboardService = class DashboardService {
     prisma;
     constructor(prisma) {
@@ -64,8 +72,7 @@ let DashboardService = class DashboardService {
                 status: { notIn: ['DONE', 'CANCELLED'] },
             },
             include: {
-                createdBy: { select: userSelect },
-                assignee: { select: userSelect },
+                ...issueInclude,
                 project: { select: { identifier: true } },
             },
             orderBy: { updatedAt: 'desc' },
@@ -79,8 +86,7 @@ let DashboardService = class DashboardService {
         const issues = await this.prisma.issue.findMany({
             where: { projectId: { in: projectIds } },
             include: {
-                createdBy: { select: userSelect },
-                assignee: { select: userSelect },
+                ...issueInclude,
                 project: { select: { identifier: true } },
             },
             orderBy: { updatedAt: 'desc' },
@@ -137,6 +143,7 @@ let DashboardService = class DashboardService {
             dueDate: issue.dueDate?.toISOString() ?? null,
             createdAt: issue.createdAt.toISOString(),
             updatedAt: issue.updatedAt.toISOString(),
+            labels: issue.labels.map((il) => il.label),
             createdBy: issue.createdBy,
             assignee: issue.assignee,
         };
