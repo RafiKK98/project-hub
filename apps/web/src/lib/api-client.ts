@@ -1,4 +1,5 @@
 import type { ApiError } from "@projecthub/types";
+import { authApi } from "./auth-api";
 
 const API_BASE_URL =
   process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
@@ -82,26 +83,15 @@ async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return null;
 
-  if (!refreshPromise) {
-    refreshPromise = fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    })
-      .then(async (res) => {
-        if (!res.ok) return null;
-        const tokens = (await res.json()) as {
-          accessToken: string;
-          refreshToken: string;
-        };
+  if (!refreshPromise)
+    refreshPromise = authApi
+      .refresh(refreshToken)
+      .then(async (tokens) => {
         writeTokens(tokens);
         return tokens.accessToken;
       })
       .catch(() => null)
-      .finally(() => {
-        refreshPromise = null;
-      });
-  }
+      .finally(() => (refreshPromise = null));
 
   return refreshPromise;
 }
