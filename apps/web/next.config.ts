@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const isDev = process.env["NODE_ENV"] !== "production";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
@@ -22,7 +23,7 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       isDev
         ? "connect-src 'self' http://localhost:* ws://localhost:*"
-        : "connect-src 'self' https: wss://://onrender.com",
+        : `connect-src 'self' https: wss://${new URL(API_URL!).hostname}`,
       "frame-ancestors 'none'",
     ].join("; "),
   },
