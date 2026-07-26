@@ -4,8 +4,8 @@ import { IssueFilterBar } from "@/components/issues/issue-filter-bar";
 import { IssueListGrouped } from "@/components/issues/issue-list-grouped";
 import { LazyIssueBoard } from "@/components/issues/lazy-issue-board";
 import { ViewToggle, type IssueView } from "@/components/issues/view-toggle";
+import { ProjectMembersPanel } from "@/components/projects/project-members-panel";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { applyIssueFilters, useIssueFilters } from "@/hooks/use-issue-filters";
@@ -17,7 +17,7 @@ import {
 } from "@/hooks/use-projects";
 import { useRealtimeProject } from "@/hooks/use-realtime-project";
 import type { IssueStatus } from "@projecthub/types";
-import { ArrowLeft, ListTodo, Plus, Settings, Users } from "lucide-react";
+import { ArrowLeft, ListTodo, Plus, Settings } from "lucide-react";
 import Link from "next/link";
 import { Suspense, use, useCallback, useState } from "react";
 
@@ -42,6 +42,8 @@ function ProjectPageInner({
     org?.id ?? "",
     identifier,
   );
+  // Still needed here for the filter bar's assignee dropdown — react-query
+  // dedupes this against the identical query the members panel also uses.
   const { data: members } = useProjectMembers(org?.id ?? "", project?.id ?? "");
   const { data: issues, isLoading: issuesLoading } = useIssues(
     org?.id ?? "",
@@ -218,7 +220,7 @@ function ProjectPageInner({
       </section>
 
       {/* Members */}
-      <section>
+      {/* <section className="mb-10">
         <div className="mb-4 flex items-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" />
           <h2 className="text-base font-medium text-foreground">
@@ -245,7 +247,16 @@ function ProjectPageInner({
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
+
+      {/* Members — now fully manageable, not just a read-only list */}
+      {org && project && (
+        <ProjectMembersPanel
+          orgId={org.id}
+          projectId={project.id}
+          canManage={Boolean(canManage)}
+        />
+      )}
     </div>
   );
 }
