@@ -1,6 +1,7 @@
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
@@ -20,6 +21,11 @@ async function bootstrap(): Promise<void> {
     'app.frontendUrl',
     'http://localhost:3000',
   );
+
+  // ── WebSocket adapter ────────────────────────────────────────────────────
+  // Required for @nestjs/websockets + socket.io to work — without this the
+  // gateway decorators are registered but no transport is actually listening.
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   // ── Global prefix & versioning ─────────────────────────────────────────────
   app.setGlobalPrefix('api');
@@ -76,6 +82,7 @@ async function bootstrap(): Promise<void> {
   if (nodeEnv !== 'production') {
     console.warn(`🚀 API running on http://localhost:${port}/api/v1`);
     console.warn(`📖 Swagger available at http://localhost:${port}/api/docs`);
+    console.warn(`🔌 WebSocket namespace at ws://localhost:${port}/realtime`);
   }
 }
 

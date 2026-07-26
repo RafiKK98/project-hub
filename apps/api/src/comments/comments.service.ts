@@ -12,6 +12,7 @@ import {
 import type { CommentDto } from '@projecthub/types';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { CreateCommentDto, UpdateCommentDto } from './dto';
 
 const ORG_ADMIN_ROLES: MemberRole[] = [MemberRole.OWNER, MemberRole.ADMIN];
@@ -28,6 +29,7 @@ export class CommentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly realtime: RealtimeGateway,
   ) {}
 
   async create(
@@ -53,7 +55,6 @@ export class CommentsService {
       include: { author: { select: authorSelect } },
     });
 
-    // Notify issue assignee if they didn't write the comment
     if (issue.assigneeId && issue.assigneeId !== userId) {
       const project = await this.prisma.project.findUnique({
         where: { id: projectId },
@@ -87,7 +88,19 @@ export class CommentsService {
       projectId,
       userId,
     );
-    return this.toCommentDto(comment, userId, canDeleteAny);
+    const result = this.toCommentDto(comment, userId, canDeleteAny);
+
+    // Broadcast without the per-viewer canEdit/canDelete flags baked in —
+    // those are relative to who's looking, not universal. Frontend just
+    // uses this to know a refetch is needed for this issue's comment thread.
+    this.realtime.emitToProject(
+      projectId,
+      'comment:created',
+      { ...result, issueNumber: issue.number },
+      userId,
+    );
+
+    return result;
   }
 
   async findAllForIssue(
@@ -132,10 +145,8 @@ export class CommentsService {
     });
     if (!existing) throw new NotFoundException('Comment not found');
 
-    // Only the author can edit — no manager override for edits, only deletes
-    if (existing.authorId !== userId) {
+    if (existing.authorId !== userId)
       throw new ForbiddenException('You can only edit your own comments');
-    }
 
     const comment = await this.prisma.comment.update({
       where: { id: commentId },
@@ -143,7 +154,14 @@ export class CommentsService {
       include: { author: { select: authorSelect } },
     });
 
-    return this.toCommentDto(comment, userId, true);
+    const result = this.toCommentDto(comment, userId, true);
+    this.realtime.emitToProject(
+      projectId,
+      'comment:updated',
+      { ...result, issueNumber },
+      userId,
+    );
+    return result;
   }
 
   async delete(
@@ -173,9 +191,14 @@ export class CommentsService {
     }
 
     await this.prisma.comment.delete({ where: { id: commentId } });
-  }
 
-  // ── Private helpers ─────────────────────────────────────────────────────────
+    this.realtime.emitToProject(
+      projectId,
+      'comment:deleted',
+      { id: commentId, issueId: existing.issueId, issueNumber },
+      userId,
+    );
+  }
 
   private async assertIssueAccess(
     orgId: string,

@@ -13,6 +13,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { UsersModule } from './users/users.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { LabelsModule } from './labels/labels.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { LabelsModule } from './labels/labels.module';
     NotificationsModule,
     DashboardModule,
     LabelsModule,
+    RealtimeModule,
   ],
 })
 export class AppModule {}

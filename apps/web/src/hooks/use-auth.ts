@@ -2,6 +2,7 @@
 
 import { ApiClientError } from "@/lib/api-client";
 import { authApi } from "@/lib/auth-api";
+import { disconnectSocket } from "@/lib/socket";
 import type {
   LoginFormValues,
   RegisterFormValues,
@@ -62,7 +63,10 @@ export function useAuth() {
     } catch {
       // Always clear local session even if the API call fails
     } finally {
-      // Clear ALL cached query data so the next user starts fresh
+      // Close the realtime connection so it doesn't keep retrying with a
+      // dead token, and so the next user who logs in on this device gets a
+      // fresh connection instead of inheriting this one's room memberships.
+      disconnectSocket();
       queryClient.clear();
       clearSession();
       document.cookie = "ph-access-token=; path=/; max-age=0";

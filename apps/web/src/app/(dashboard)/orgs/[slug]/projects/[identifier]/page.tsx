@@ -6,6 +6,7 @@ import { LazyIssueBoard } from "@/components/issues/lazy-issue-board";
 import { ViewToggle, type IssueView } from "@/components/issues/view-toggle";
 import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { applyIssueFilters, useIssueFilters } from "@/hooks/use-issue-filters";
 import { useIssues, useReorderIssue } from "@/hooks/use-issues";
@@ -14,6 +15,7 @@ import {
   useProjectByIdentifier,
   useProjectMembers,
 } from "@/hooks/use-projects";
+import { useRealtimeProject } from "@/hooks/use-realtime-project";
 import type { IssueStatus } from "@projecthub/types";
 import { ArrowLeft, ListTodo, Plus, Settings, Users } from "lucide-react";
 import Link from "next/link";
@@ -47,6 +49,8 @@ function ProjectPageInner({
   );
   const reorderIssue = useReorderIssue(org?.id ?? "", project?.id ?? "");
 
+  const { isConnected } = useRealtimeProject(org?.id ?? "", project?.id ?? "");
+
   const canManage =
     project && MANAGER_ROLES.includes(project.currentUserRole ?? "");
 
@@ -63,7 +67,7 @@ function ProjectPageInner({
     [reorderIssue],
   );
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div className="mx-auto max-w-5xl px-4 py-12">
         <div className="space-y-4">
@@ -72,9 +76,8 @@ function ProjectPageInner({
         </div>
       </div>
     );
-  }
 
-  if (!project) {
+  if (!project)
     return (
       <div className="mx-auto max-w-3xl px-4 py-12 text-center">
         <p className="text-muted-foreground">Project not found.</p>
@@ -86,7 +89,6 @@ function ProjectPageInner({
         </Link>
       </div>
     );
-  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
@@ -109,6 +111,12 @@ function ProjectPageInner({
                 {project.name}
               </h1>
               <ProjectStatusBadge status={project.status} />
+              {isConnected && (
+                <Badge variant="success">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  Live
+                </Badge>
+              )}
             </div>
             {project.description && (
               <p className="mt-1 text-sm text-muted-foreground">

@@ -1,10 +1,11 @@
+import { RealtimeModule } from '@/realtime/realtime.module';
 import { Module } from '@nestjs/common';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { CommentsController } from './comments.controller';
 import { CommentsService } from './comments.service';
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [NotificationsModule, RealtimeModule],
   controllers: [CommentsController],
   providers: [CommentsService],
   exports: [CommentsService],

@@ -26,6 +26,7 @@ function makeIssue(overrides: Partial<IssueDto>): IssueDto {
       avatarUrl: null,
     },
     assignee: null,
+    labels: [{ id: "1", name: "Low priority", color: "#6366f1" }],
     ...overrides,
   };
 }

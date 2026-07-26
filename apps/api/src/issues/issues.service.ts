@@ -1,3 +1,4 @@
+import { RealtimeGateway } from '@/realtime/realtime.gateway';
 import {
   ForbiddenException,
   Injectable,
@@ -32,6 +33,7 @@ export class IssuesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly realtime: RealtimeGateway,
   ) {}
 
   // ── Create ──────────────────────────────────────────────────────────────────
@@ -103,7 +105,9 @@ export class IssuesService {
       });
     }
 
-    return this.toIssueDto(issue, project.identifier);
+    const result = this.toIssueDto(issue, project.identifier);
+    this.realtime.emitToProject(projectId, 'issue:created', result, userId);
+    return result;
   }
 
   // ── Read ────────────────────────────────────────────────────────────────────
@@ -242,7 +246,9 @@ export class IssuesService {
       });
     }
 
-    return this.toIssueDto(issue, project.identifier);
+    const result = this.toIssueDto(issue, project.identifier);
+    this.realtime.emitToProject(projectId, 'issue:updated', result, userId);
+    return result;
   }
 
   // ── Reorder ─────────────────────────────────────────────────────────────────
@@ -270,7 +276,9 @@ export class IssuesService {
       include: issueInclude,
     });
 
-    return this.toIssueDto(issue, project.identifier);
+    const result = this.toIssueDto(issue, project.identifier);
+    this.realtime.emitToProject(projectId, 'issue:reordered', result, userId);
+    return result;
   }
 
   // ── Delete ──────────────────────────────────────────────────────────────────
@@ -289,6 +297,13 @@ export class IssuesService {
     if (!existing) throw new NotFoundException('Issue not found');
 
     await this.prisma.issue.delete({ where: { id: existing.id } });
+
+    this.realtime.emitToProject(
+      projectId,
+      'issue:deleted',
+      { id: existing.id, number: existing.number },
+      userId,
+    );
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────

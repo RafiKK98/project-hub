@@ -30,6 +30,7 @@ import {
   useProjectByIdentifier,
   useProjectMembers,
 } from "@/hooks/use-projects";
+import { useRealtimeProject } from "@/hooks/use-realtime-project";
 import { getInitials } from "@/lib/utils";
 import type { IssuePriority, IssueStatus } from "@projecthub/types";
 import { ArrowLeft, Trash2 } from "lucide-react";
@@ -68,6 +69,8 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
     slug,
     identifier,
   );
+
+  useRealtimeProject(org?.id ?? "", project?.id ?? "");
 
   const canManageLabels = project?.currentUserRole === "MANAGER";
 

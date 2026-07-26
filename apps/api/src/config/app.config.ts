@@ -25,11 +25,11 @@ function required(key: string): string {
 function requireInProduction(key: string, devFallback: string): string {
   const value = process.env[key];
   if (!value) {
-    if (process.env['NODE_ENV'] === 'production') {
+    if (process.env['NODE_ENV'] === 'production')
       throw new Error(
         `Missing required environment variable in production: ${key}`,
       );
-    }
+
     return devFallback;
   }
   return value;
