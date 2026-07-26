@@ -22,7 +22,7 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       isDev
         ? "connect-src 'self' http://localhost:* ws://localhost:*"
-        : "connect-src 'self' https:",
+        : "connect-src 'self' https: wss://://onrender.com",
       "frame-ancestors 'none'",
     ].join("; "),
   },
