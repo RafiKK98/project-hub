@@ -1,3 +1,4 @@
+import { RealtimeGateway } from '@/realtime/realtime.gateway';
 import { beforeEach, describe, it, jest } from '@jest/globals';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
@@ -81,6 +82,10 @@ const mockProjectMember = (
   updatedAt: new Date(),
 });
 
+const realtime = {
+  emitToProject: jest.fn(),
+};
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe('IssuesService', () => {
@@ -101,6 +106,7 @@ describe('IssuesService', () => {
         IssuesService,
         { provide: PrismaService, useValue: prisma },
         { provide: NotificationsService, useValue: mockNotificationsService },
+        { provide: RealtimeGateway, useValue: realtime },
       ],
     }).compile();
 
