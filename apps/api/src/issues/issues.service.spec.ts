@@ -58,6 +58,7 @@ function makeMockIssue(assigneeId: string | null = null) {
     updatedAt: new Date(),
     createdBy: mockUser,
     assignee: null,
+    labels: [],
   };
 }
 
