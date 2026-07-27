@@ -32,17 +32,18 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  accounts           Account[]
-  refreshTokens      RefreshToken[]
-  verificationTokens VerificationToken[]
-  memberships        Membership[]
-  invitationsSent    Invitation[]        @relation("InvitedBy")
-  projectsCreated    Project[]           @relation("ProjectsCreated")
-  projectMembers     ProjectMember[]
-  issuesCreated      Issue[]             @relation("IssuesCreated")
-  issuesAssigned     Issue[]             @relation("IssuesAssigned")
-  commentsAuthored   Comment[]           @relation("CommentsAuthored")
-  notifications      Notification[]      @relation("NotificationsReceived")
+  accounts            Account[]
+  refreshTokens       RefreshToken[]
+  verificationTokens  VerificationToken[]
+  memberships         Membership[]
+  invitationsSent     Invitation[]        @relation("InvitedBy")
+  projectsCreated     Project[]           @relation("ProjectsCreated")
+  projectMembers      ProjectMember[]
+  issuesCreated       Issue[]             @relation("IssuesCreated")
+  issuesAssigned      Issue[]             @relation("IssuesAssigned")
+  commentsAuthored    Comment[]           @relation("CommentsAuthored")
+  notifications       Notification[]      @relation("NotificationsReceived")
+  activitiesPerformed Activity[]          @relation("ActivityActor")
 
   @@index([email])
   @@map("users")
@@ -267,11 +268,12 @@ model Issue {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdBy User         @relation("IssuesCreated", fields: [createdById], references: [id])
-  assignee  User?        @relation("IssuesAssigned", fields: [assigneeId], references: [id], onDelete: SetNull)
-  comments  Comment[]
-  labels    IssueLabel[]
+  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy  User         @relation("IssuesCreated", fields: [createdById], references: [id])
+  assignee   User?        @relation("IssuesAssigned", fields: [assigneeId], references: [id], onDelete: SetNull)
+  comments   Comment[]
+  labels     IssueLabel[]
+  activities Activity[]
 
   @@unique([projectId, number])
   @@index([projectId])
@@ -331,6 +333,36 @@ model Comment {
   @@index([issueId])
   @@index([authorId])
   @@map("comments")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 8.2 — Activity Timeline
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ActivityType {
+  ISSUE_CREATED
+  TITLE_CHANGED
+  DESCRIPTION_CHANGED
+  STATUS_CHANGED
+  PRIORITY_CHANGED
+  ASSIGNEE_CHANGED
+  DUE_DATE_CHANGED
+  LABELS_CHANGED
+}
+
+model Activity {
+  id        String       @id @default(cuid())
+  issueId   String
+  actorId   String
+  type      ActivityType
+  payload   Json
+  createdAt DateTime     @default(now())
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  actor User  @relation("ActivityActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([issueId, createdAt])
+  @@map("activities")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
