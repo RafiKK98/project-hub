@@ -1,3 +1,13 @@
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
 import { useOrgMembers } from "@/hooks/use-organizations";
 import {
   useAddProjectMember,
@@ -9,16 +19,6 @@ import { useAuthStore } from "@/store/auth.store";
 import { ProjectMemberRole } from "@projecthub/types";
 import { UserPlus, Users, X } from "lucide-react";
 import { useState } from "react";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Button } from "../ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Spinner } from "../ui/spinner";
 
 const PROJECT_ROLES: ProjectMemberRole[] = [
   "MANAGER",
@@ -103,7 +103,7 @@ export function ProjectMembersPanel({
       </div>
 
       {showAddForm && (
-        <div className="mb-4 flex flex-wrap gap-2 rounded-lg border border-border bg-muted/30 p-4">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-4">
           {availableOrgMembers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Every organization member is already part of this project. Invite
