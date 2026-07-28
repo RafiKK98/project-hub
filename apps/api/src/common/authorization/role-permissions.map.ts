@@ -45,16 +45,13 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
 /**
  * Returns the full permission set for a given role.
  */
-export function getPermissionsForRole(role: UserRole): Permission[] {
-  return ROLE_PERMISSIONS[role] ?? [];
-}
+export const getPermissionsForRole = (role: UserRole): Permission[] =>
+  ROLE_PERMISSIONS[role] ?? [];
 
 /**
  * Checks whether a role has a specific permission.
  */
-export function roleHasPermission(
+export const roleHasPermission = (
   role: UserRole,
   permission: Permission,
-): boolean {
-  return getPermissionsForRole(role).includes(permission);
-}
+): boolean => getPermissionsForRole(role).includes(permission);

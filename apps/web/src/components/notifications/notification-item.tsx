@@ -1,17 +1,7 @@
-import { cn } from "@/lib/utils";
+import { cn, timeAgo } from "@/lib/utils";
 import type { NotificationDto, NotificationType } from "@projecthub/types";
 import { CircleDot, GitBranch, MessageSquare, UserPlus } from "lucide-react";
 import Link from "next/link";
-
-function timeAgo(dateStr: string): string {
-  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return `${Math.floor(hours / 24)}d ago`;
-}
 
 function NotificationIcon({ type }: { type: NotificationType }) {
   const className = "h-4 w-4 shrink-0";

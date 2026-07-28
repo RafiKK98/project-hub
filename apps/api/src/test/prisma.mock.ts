@@ -9,14 +9,10 @@ export type MockPrisma = DeepMockProxy<PrismaClient>;
  *   const prisma = createPrismaMock()
  *   prisma.user.findUnique.mockResolvedValue(mockUser)
  */
-export function createPrismaMock(): MockPrisma {
-  return mockDeep<PrismaClient>();
-}
+export const createPrismaMock = (): MockPrisma => mockDeep<PrismaClient>();
 
 /**
  * Resets all mock implementations and call counts.
  * Call in beforeEach to ensure test isolation.
  */
-export function resetPrismaMock(mock: MockPrisma): void {
-  mockReset(mock);
-}
+export const resetPrismaMock = (mock: MockPrisma): void => mockReset(mock);

@@ -26,35 +26,30 @@ export function useRealtimeProject(
 
     const socket = getSocket();
 
-    function join() {
+    const join = () => {
       socket.emit("join_project", { orgId, projectId });
       setIsConnected(true);
-    }
+    };
 
-    function handleDisconnect() {
-      setIsConnected(false);
-    }
+    const handleDisconnect = () => setIsConnected(false);
 
-    function invalidateIssues() {
+    const invalidateIssues = () =>
       queryClient.invalidateQueries({
         queryKey: issueKeys.all(orgId, projectId),
       });
-    }
 
-    function invalidateComments() {
+    const invalidateComments = () =>
       // Partial key match invalidates every issue's comment thread cache
       // under this project — slightly broad, but comment events are
       // infrequent enough that this is cheap.
       queryClient.invalidateQueries({
         queryKey: ["comments", orgId, projectId],
       });
-    }
 
-    function invalidateActivity() {
+    const invalidateActivity = () =>
       queryClient.invalidateQueries({
         queryKey: ["activity", orgId, projectId],
       });
-    }
 
     if (!socket.connected) socket.connect();
     if (socket.connected) join();
