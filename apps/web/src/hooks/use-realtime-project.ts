@@ -5,6 +5,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { issueKeys } from "./use-issues";
 
+/**
+ * Subscribes to real-time updates for a project. Any issue, comment, or
+ * activity change made by another team member currently viewing the same
+ * project shows up without a manual refresh.
+ *
+ * Invalidation, not merging: on any event we just invalidate the relevant
+ * query keys and let TanStack Query refetch. Simpler than hand-merging
+ * partial payloads into cache state, and correct by construction.
+ */
 export function useRealtimeProject(
   orgId: string,
   projectId: string,
@@ -41,6 +50,12 @@ export function useRealtimeProject(
       });
     }
 
+    function invalidateActivity() {
+      queryClient.invalidateQueries({
+        queryKey: ["activity", orgId, projectId],
+      });
+    }
+
     if (!socket.connected) socket.connect();
     if (socket.connected) join();
 
@@ -53,6 +68,7 @@ export function useRealtimeProject(
     socket.on("comment:created", invalidateComments);
     socket.on("comment:updated", invalidateComments);
     socket.on("comment:deleted", invalidateComments);
+    socket.on("activity:created", invalidateActivity);
 
     return () => {
       socket.emit("leave_project", { projectId });
@@ -65,6 +81,7 @@ export function useRealtimeProject(
       socket.off("comment:created", invalidateComments);
       socket.off("comment:updated", invalidateComments);
       socket.off("comment:deleted", invalidateComments);
+      socket.off("activity:created", invalidateActivity);
     };
   }, [orgId, projectId, queryClient]);
 

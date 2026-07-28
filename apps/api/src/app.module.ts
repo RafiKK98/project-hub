@@ -14,6 +14,7 @@ import { UsersModule } from './users/users.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { LabelsModule } from './labels/labels.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { RealtimeModule } from './realtime/realtime.module';
     DashboardModule,
     LabelsModule,
     RealtimeModule,
+    ActivityModule,
   ],
 })
 export class AppModule {}

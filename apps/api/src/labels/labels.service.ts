@@ -1,3 +1,4 @@
+import { ActivityService } from '@/activity/activity.service';
 import { PrismaService } from '@/database/prisma.service';
 import {
   ConflictException,
@@ -5,7 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MemberRole, ProjectMemberRole } from '@prisma/client';
+import { ActivityType, MemberRole, ProjectMemberRole } from '@prisma/client';
 import { LabelDto } from '@projecthub/types';
 import { CreateLabelDto, SetIssueLabelsDto, UpdateLabelDto } from './dto';
 
@@ -14,7 +15,10 @@ const PROJECT_MANAGER_ROLES: ProjectMemberRole[] = [ProjectMemberRole.MANAGER];
 
 @Injectable()
 export class LabelsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly activityService: ActivityService,
+  ) {}
 
   // ── Project labels CRUD ───────────────────────────────────────────────────
 
@@ -110,6 +114,7 @@ export class LabelsService {
 
     const issue = await this.prisma.issue.findUnique({
       where: { projectId_number: { projectId, number: issueNumber } },
+      include: { labels: { include: { label: true } } },
     });
     if (!issue) throw new NotFoundException('Issue not found');
 
@@ -123,6 +128,13 @@ export class LabelsService {
           'One or more labels not found in this project',
         );
     }
+
+    // Diff against the current set before we overwrite it, for the activity log
+    const previousLabels = issue.labels.map((il) => il.label);
+    const previousIds = new Set(previousLabels.map((l) => l.id));
+    const nextIds = new Set(dto.labelIds);
+    const addedIds = dto.labelIds.filter((id) => !previousIds.has(id));
+    const removedLabels = previousLabels.filter((l) => !nextIds.has(l.id));
 
     // Replace all labels atomically
     await this.prisma.$transaction([
@@ -143,6 +155,20 @@ export class LabelsService {
       where: { id: { in: dto.labelIds } },
       orderBy: { name: 'asc' },
     });
+
+    if (addedIds.length > 0 || removedLabels.length > 0) {
+      const addedLabels = labels.filter((l) => addedIds.includes(l.id));
+      await this.activityService.record(
+        projectId,
+        issue.id,
+        userId,
+        ActivityType.LABELS_CHANGED,
+        {
+          added: addedLabels.map((l) => ({ name: l.name, color: l.color })),
+          removed: removedLabels.map((l) => ({ name: l.name, color: l.color })),
+        },
+      );
+    }
 
     return labels.map(this.toDto);
   }

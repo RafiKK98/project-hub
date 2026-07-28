@@ -1,11 +1,17 @@
+import { ActivityService } from '@/activity/activity.service';
 import { RealtimeGateway } from '@/realtime/realtime.gateway';
 import {
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MemberRole, NotificationType, Prisma } from '@prisma/client';
-import { IssueDto, IssueFilters } from '@projecthub/types';
+import {
+  ActivityType,
+  MemberRole,
+  NotificationType,
+  Prisma,
+} from '@prisma/client';
+import { ActivityPayload, IssueDto, IssueFilters } from '@projecthub/types';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateIssueDto, ReorderIssueDto, UpdateIssueDto } from './dto';
@@ -34,6 +40,7 @@ export class IssuesService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly realtime: RealtimeGateway,
+    private readonly activityService: ActivityService,
   ) {}
 
   // ── Create ──────────────────────────────────────────────────────────────────
@@ -46,9 +53,8 @@ export class IssuesService {
   ): Promise<IssueDto> {
     const project = await this.assertProjectAccess(orgId, projectId, userId);
 
-    if (dto.assigneeId) {
+    if (dto.assigneeId)
       await this.assertProjectMember(projectId, dto.assigneeId);
-    }
 
     const issue = await this.prisma.$transaction(
       async (tx) => {
@@ -104,6 +110,16 @@ export class IssuesService {
         },
       });
     }
+
+    await this.activityService.record(
+      projectId,
+      issue.id,
+      userId,
+      ActivityType.ISSUE_CREATED,
+      {
+        title: issue.title,
+      },
+    );
 
     const result = this.toIssueDto(issue, project.identifier);
     this.realtime.emitToProject(projectId, 'issue:created', result, userId);
@@ -177,6 +193,15 @@ export class IssuesService {
     if (dto.assigneeId)
       await this.assertProjectMember(projectId, dto.assigneeId);
 
+    // Resolve the new assignee's display info before the write — needed for
+    // both the existing notification and the new activity log entry
+    let newAssignee: { name: string | null; email: string } | null = null;
+    if (dto.assigneeId !== undefined && dto.assigneeId !== null)
+      newAssignee = await this.prisma.user.findUnique({
+        where: { id: dto.assigneeId },
+        select: { name: true, email: true },
+      });
+
     const issue = await this.prisma.issue.update({
       where: { id: existing.id },
       data: {
@@ -204,7 +229,7 @@ export class IssuesService {
       dto.assigneeId &&
       dto.assigneeId !== existing.assigneeId &&
       dto.assigneeId !== userId
-    ) {
+    )
       await this.notificationsService.createNotification({
         userId: dto.assigneeId,
         type: NotificationType.ISSUE_ASSIGNED,
@@ -219,7 +244,6 @@ export class IssuesService {
           projectIdentifier: project.identifier,
         },
       });
-    }
 
     // Notify assignee of status change (if assigned, status changed, and not self-update)
     if (
@@ -227,7 +251,7 @@ export class IssuesService {
       dto.status !== existing.status &&
       existing.assigneeId &&
       existing.assigneeId !== userId
-    ) {
+    )
       await this.notificationsService.createNotification({
         userId: existing.assigneeId,
         type: NotificationType.ISSUE_STATUS_CHANGED,
@@ -244,7 +268,66 @@ export class IssuesService {
           projectIdentifier: project.identifier,
         },
       });
+
+    // ── Activity log — diff the pre-update row against the incoming DTO ────
+    const activityEntries: Array<{
+      type: ActivityType;
+      payload: ActivityPayload;
+    }> = [];
+
+    if (dto.title !== undefined && dto.title.trim() !== existing.title)
+      activityEntries.push({
+        type: ActivityType.TITLE_CHANGED,
+        payload: { oldTitle: existing.title, newTitle: dto.title.trim() },
+      });
+    if (
+      dto.description !== undefined &&
+      dto.description !== existing.description
+    )
+      activityEntries.push({
+        type: ActivityType.DESCRIPTION_CHANGED,
+        payload: {},
+      });
+    if (dto.status !== undefined && dto.status !== existing.status)
+      activityEntries.push({
+        type: ActivityType.STATUS_CHANGED,
+        payload: { oldStatus: existing.status, newStatus: dto.status },
+      });
+    if (dto.priority !== undefined && dto.priority !== existing.priority)
+      activityEntries.push({
+        type: ActivityType.PRIORITY_CHANGED,
+        payload: { oldPriority: existing.priority, newPriority: dto.priority },
+      });
+    if (dto.assigneeId !== undefined && dto.assigneeId !== existing.assigneeId)
+      activityEntries.push({
+        type: ActivityType.ASSIGNEE_CHANGED,
+        payload: {
+          oldAssigneeName: existing.assignee
+            ? (existing.assignee.name ?? existing.assignee.email)
+            : null,
+          newAssigneeName: newAssignee
+            ? (newAssignee.name ?? newAssignee.email)
+            : null,
+        },
+      });
+    if (dto.dueDate !== undefined) {
+      const oldDueDateIso = existing.dueDate?.toISOString() ?? null;
+      const newDueDateIso = dto.dueDate ?? null;
+      if (oldDueDateIso !== newDueDateIso)
+        activityEntries.push({
+          type: ActivityType.DUE_DATE_CHANGED,
+          payload: { oldDueDate: oldDueDateIso, newDueDate: newDueDateIso },
+        });
     }
+
+    for (const entry of activityEntries)
+      await this.activityService.record(
+        projectId,
+        issue.id,
+        userId,
+        entry.type,
+        entry.payload,
+      );
 
     const result = this.toIssueDto(issue, project.identifier);
     this.realtime.emitToProject(projectId, 'issue:updated', result, userId);
