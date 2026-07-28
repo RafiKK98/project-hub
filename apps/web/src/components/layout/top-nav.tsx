@@ -22,7 +22,7 @@ export function TopNav() {
   const currentOrg = orgs?.find((o) => o.slug === currentOrgSlug);
 
   return (
-    <header className="sticky top-0 z-40 flex h-12 items-center border-b border-border bg-background/95 px-4 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 flex h-12 items-center border-b border-border shadow shadow-stone-100 bg-background/95 px-4 backdrop-blur-sm">
       {/* Left — logo + breadcrumb */}
       <div className="flex flex-1 items-center gap-2">
         <Link
