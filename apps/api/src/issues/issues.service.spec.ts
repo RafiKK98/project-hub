@@ -8,6 +8,7 @@ import {
   MemberRole,
   ProjectMemberRole,
 } from '@prisma/client';
+import { ActivityService } from '../activity/activity.service';
 import { PrismaService } from '../database/prisma.service';
 import { IssuesService } from '../issues/issues.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -108,6 +109,7 @@ describe('IssuesService', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: RealtimeGateway, useValue: realtime },
+        { provide: ActivityService, useValue: { record: jest.fn() } },
       ],
     }).compile();
 
