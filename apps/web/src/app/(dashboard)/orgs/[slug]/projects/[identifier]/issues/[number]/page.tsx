@@ -9,6 +9,7 @@ import {
   getStatusLabel,
   STATUS_OPTIONS,
 } from "@/components/issues/status-icon";
+import { SubtaskSection } from "@/components/issues/subtask-section";
 import { LabelChipList } from "@/components/labels/label-chip";
 import { LabelPicker } from "@/components/labels/label-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -177,6 +178,17 @@ export default function IssueDetailPage({ params }: IssueDetailPageProps) {
         rows={1}
         className="mb-6 w-full resize-none overflow-hidden border-none focus-visible:border-0 focus-visible:border-transparent bg-transparent text-2xl! font-semibold tracking-tight text-foreground outline-none focus:ring-0 focus-visible:ring-0"
       />
+
+      {/* Subtaks relationship - breadcrumb if this IS a subtask, checklist otherwise */}
+      {org && project && (
+        <SubtaskSection
+          orgId={org.id}
+          projectId={project.id}
+          orgSlug={org.slug}
+          projectIdentifier={identifier}
+          issue={issue}
+        />
+      )}
 
       <div className="grid grid-cols-[1fr_220px] gap-8">
         {/* Main content */}

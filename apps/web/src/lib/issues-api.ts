@@ -4,6 +4,7 @@ import type {
   IssueDto,
   IssueFilters,
   ReorderIssuePayload,
+  SetParentPayload,
   UpdateIssuePayload,
 } from "@projecthub/types";
 
@@ -50,6 +51,17 @@ export const issuesApi = {
   ): Promise<IssueDto> =>
     apiClient.patch<IssueDto>(
       `/organizations/${orgId}/projects/${projectId}/issues/${number}`,
+      payload,
+    ),
+
+  setParent: (
+    orgId: string,
+    projectId: string,
+    number: number,
+    payload: SetParentPayload,
+  ): Promise<IssueDto> =>
+    apiClient.patch<IssueDto>(
+      `/organizations/${orgId}/projects/${projectId}/issues/${number}/parent`,
       payload,
     ),
 

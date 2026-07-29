@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { IssueDto } from "@projecthub/types";
+import { ListChecks } from "lucide-react";
 import Link from "next/link";
 import { LabelChipList } from "../labels/label-chip";
 import { PriorityIcon } from "./priority-icon";
@@ -31,6 +32,13 @@ export function IssueRow({
       {/* Labels */}
       {issue.labels.length > 0 && (
         <LabelChipList labels={issue.labels} max={2} />
+      )}
+
+      {issue.subtaskStats.total > 0 && (
+        <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+          <ListChecks className="h-3 w-3" />
+          {issue.subtaskStats.done}/{issue.subtaskStats.total}
+        </span>
       )}
 
       {issue.dueDate && (

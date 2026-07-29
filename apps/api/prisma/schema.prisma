@@ -274,11 +274,15 @@ model Issue {
   comments   Comment[]
   labels     IssueLabel[]
   activities Activity[]
+  parentId   String?
+  parent     Issue?       @relation("SubIssues", fields: [parentId], references: [id], onDelete: SetNull)
+  subIssues  Issue[]      @relation("SubIssues")
 
   @@unique([projectId, number])
   @@index([projectId])
   @@index([assigneeId])
   @@index([status])
+  @@index([parentId])
   @@map("issues")
 }
 
@@ -348,6 +352,7 @@ enum ActivityType {
   ASSIGNEE_CHANGED
   DUE_DATE_CHANGED
   LABELS_CHANGED
+  PARENT_CHANGED
 }
 
 model Activity {

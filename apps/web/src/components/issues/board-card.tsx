@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { IssueDto } from "@projecthub/types";
+import { ListChecks } from "lucide-react";
 import Link from "next/link";
 import { LabelChipList } from "../labels/label-chip";
 import { PriorityIcon } from "./priority-icon";
@@ -71,6 +72,14 @@ export function BoardCard({
       {/* Labels */}
       {issue.labels.length > 0 && (
         <LabelChipList labels={issue.labels} max={2} />
+      )}
+
+      {/* Subtask progress */}
+      {issue.subtaskStats.total > 0 && (
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <ListChecks className="h-3 w-3" />
+          {issue.subtaskStats.done}/{issue.subtaskStats.total}
+        </div>
       )}
 
       {/* Footer */}

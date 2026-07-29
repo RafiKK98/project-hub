@@ -6,7 +6,8 @@ export type ActivityType =
   | "PRIORITY_CHANGED"
   | "ASSIGNEE_CHANGED"
   | "DUE_DATE_CHANGED"
-  | "LABELS_CHANGED";
+  | "LABELS_CHANGED"
+  | "PARENT_CHANGED";
 
 export interface IssueCreatedPayload {
   title: string;
@@ -44,6 +45,11 @@ export interface LabelsChangedPayload {
   removed: { name: string; color: string }[];
 }
 
+export interface ParentChangedPayload {
+  oldParentKey: string | null;
+  newParentKey: string | null;
+}
+
 export type ActivityPayload =
   | IssueCreatedPayload
   | TitleChangedPayload
@@ -52,7 +58,8 @@ export type ActivityPayload =
   | PriorityChangedPayload
   | AssigneeChangedPayload
   | DueDateChangedPayload
-  | LabelsChangedPayload;
+  | LabelsChangedPayload
+  | ParentChangedPayload;
 
 export interface ActivityDto {
   id: string;

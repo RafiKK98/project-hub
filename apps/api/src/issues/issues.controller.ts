@@ -20,7 +20,12 @@ import {
 import type { IssueDto, IssuePriority, IssueStatus } from '@projecthub/types';
 import type { JwtPayload } from '../auth/token.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { CreateIssueDto, ReorderIssueDto, UpdateIssueDto } from './dto';
+import {
+  CreateIssueDto,
+  ReorderIssueDto,
+  SetParentDto,
+  UpdateIssueDto,
+} from './dto';
 import { IssuesService } from './issues.service';
 
 @ApiTags('Issues')
@@ -30,7 +35,9 @@ export class IssuesController {
   constructor(private readonly issuesService: IssuesService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new issue' })
+  @ApiOperation({
+    summary: 'Create a new issue (optionally as a subtask via parentId)',
+  })
   create(
     @Param('orgId') orgId: string,
     @Param('projectId') projectId: string,
@@ -41,7 +48,9 @@ export class IssuesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List issues in a project, with optional filters' })
+  @ApiOperation({
+    summary: 'List top-level issues in a project (subtasks excluded)',
+  })
   @ApiQuery({ name: 'status', required: false, isArray: true })
   @ApiQuery({ name: 'priority', required: false, isArray: true })
   @ApiQuery({ name: 'assigneeId', required: false })
@@ -85,6 +94,24 @@ export class IssuesController {
     @Body() dto: UpdateIssueDto,
   ): Promise<IssueDto> {
     return this.issuesService.update(orgId, projectId, number, user.sub, dto);
+  }
+
+  @Patch(':number/parent')
+  @ApiOperation({ summary: 'Link or unlink a subtask relationship' })
+  setParent(
+    @Param('orgId') orgId: string,
+    @Param('projectId') projectId: string,
+    @Param('number', ParseIntPipe) number: number,
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: SetParentDto,
+  ): Promise<IssueDto> {
+    return this.issuesService.setParent(
+      orgId,
+      projectId,
+      number,
+      user.sub,
+      dto,
+    );
   }
 
   @Patch(':number/reorder')

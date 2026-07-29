@@ -41,4 +41,13 @@ export class CreateIssueDto {
   @IsOptional()
   @IsDateString()
   dueDate?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Creates this issue directly as a subtask of the given parent issue ID',
+    example: 'cuid_of_parent_issue',
+  })
+  @IsOptional()
+  @IsString()
+  parentId?: string;
 }

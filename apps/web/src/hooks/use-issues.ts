@@ -100,9 +100,8 @@ export function useUpdateIssue(
           // project members cache so the UI updates without waiting for the server.
           let optimisticAssignee = old.assignee;
           if ("assigneeId" in payload) {
-            if (!payload.assigneeId) {
-              optimisticAssignee = null;
-            } else if (payload.assigneeId !== old.assignee?.id) {
+            if (!payload.assigneeId) optimisticAssignee = null;
+            else if (payload.assigneeId !== old.assignee?.id) {
               const allCacheEntries = queryClient.getQueriesData<
                 { user: IssueDto["assignee"] }[]
               >({
@@ -128,19 +127,17 @@ export function useUpdateIssue(
       return { previous };
     },
     onError: (_err, _payload, context) => {
-      if (context?.previous) {
+      if (context?.previous)
         queryClient.setQueryData(
           issueKeys.detail(orgId, projectId, number),
           context.previous,
         );
-      }
       toast.error("Failed to update issue");
     },
-    onSuccess: () => {
+    onSuccess: () =>
       queryClient.invalidateQueries({
         queryKey: issueKeys.all(orgId, projectId),
-      });
-    },
+      }),
   });
 }
 
@@ -179,18 +176,46 @@ export function useReorderIssue(orgId: string, projectId: string) {
       return { previous };
     },
     onError: (_err, _vars, context) => {
-      if (context?.previous) {
+      if (context?.previous)
         queryClient.setQueryData(
           issueKeys.lists(orgId, projectId, undefined),
           context.previous,
         );
-      }
       toast.error("Failed to reorder issue");
     },
-    onSuccess: () => {
+    onSuccess: () =>
       queryClient.invalidateQueries({
         queryKey: issueKeys.all(orgId, projectId),
-      });
+      }),
+  });
+}
+
+/**
+ * Links or unlinks a subtask relationship. Used both by the parent's
+ * checklist ("remove this subtask") and the child's own detail page
+ * ("remove from parent") — both just call this with a different `number`.
+ */
+export function useSetParent(orgId: string, projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      number,
+      parentId,
+    }: {
+      number: number;
+      parentId: string | null;
+    }) => issuesApi.setParent(orgId, projectId, number, { parentId }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: issueKeys.all(orgId, projectId),
+      }),
+    onError: (error) => {
+      const message =
+        error instanceof ApiClientError
+          ? error.body.message
+          : "Failed to update subtask relationship";
+      toast.error(message);
     },
   });
 }

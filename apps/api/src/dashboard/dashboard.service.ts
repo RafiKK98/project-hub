@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { MemberRole, Prisma } from '@prisma/client';
-import { DashboardDto, ProjectStatusBreakdown } from '@projecthub/types';
+import {
+  DashboardDto,
+  IssueDto,
+  ProjectStatusBreakdown,
+} from '@projecthub/types';
 import { PrismaService } from '../database/prisma.service';
 
 const ORG_ADMIN_ROLES: MemberRole[] = [MemberRole.OWNER, MemberRole.ADMIN];
@@ -12,6 +16,15 @@ const userSelect = {
   avatarUrl: true,
 } satisfies Prisma.UserSelect;
 
+const summarySelect = {
+  id: true,
+  number: true,
+  title: true,
+  status: true,
+  priority: true,
+  assignee: { select: userSelect },
+} satisfies Prisma.IssueSelect;
+
 const issueInclude = {
   createdBy: { select: userSelect },
   assignee: { select: userSelect },
@@ -19,6 +32,8 @@ const issueInclude = {
     include: { label: { select: { id: true, name: true, color: true } } },
     orderBy: { label: { name: 'asc' as const } },
   },
+  parent: { select: summarySelect },
+  subIssues: { select: summarySelect, orderBy: { number: 'asc' as const } },
 } satisfies Prisma.IssueInclude;
 
 @Injectable()
@@ -172,9 +187,57 @@ export class DashboardService {
         avatarUrl: string | null;
       } | null;
       labels: { label: { id: string; name: string; color: string } }[];
+      parentId: string | null;
+      parent: {
+        id: string;
+        number: number;
+        title: string;
+        status: string;
+        priority: string;
+        assignee: {
+          id: string;
+          name: string | null;
+          email: string;
+          avatarUrl: string | null;
+        } | null;
+      } | null;
+      subIssues: {
+        id: string;
+        number: number;
+        title: string;
+        status: string;
+        priority: string;
+        assignee: {
+          id: string;
+          name: string | null;
+          email: string;
+          avatarUrl: string | null;
+        } | null;
+      }[];
     },
     projectIdentifier: string,
   ) {
+    const toSummary = (s: {
+      id: string;
+      number: number;
+      title: string;
+      status: string;
+      priority: string;
+      assignee: {
+        id: string;
+        name: string | null;
+        email: string;
+        avatarUrl: string | null;
+      } | null;
+    }) => ({
+      id: s.id,
+      number: s.number,
+      key: `${projectIdentifier}-${s.number}`,
+      title: s.title,
+      status: s.status as IssueDto['status'],
+      priority: s.priority as IssueDto['priority'],
+      assignee: s.assignee,
+    });
     return {
       id: issue.id,
       number: issue.number,
@@ -190,6 +253,13 @@ export class DashboardService {
       createdAt: issue.createdAt.toISOString(),
       updatedAt: issue.updatedAt.toISOString(),
       labels: issue.labels.map((il) => il.label),
+      parentId: issue.parentId,
+      parent: issue.parent ? toSummary(issue.parent) : null,
+      subtasks: issue.subIssues.map(toSummary),
+      subtaskStats: {
+        total: issue.subIssues.length,
+        done: issue.subIssues.filter((s) => s.status === 'DONE').length,
+      },
       createdBy: issue.createdBy,
       assignee: issue.assignee,
     };

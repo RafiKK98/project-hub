@@ -10,6 +10,27 @@ export interface IssueLabel {
   color: string;
 }
 
+/** Lightweight issue reference used for parent/subtask relationships. */
+export interface IssueSummary {
+  id: string;
+  number: number;
+  key: string;
+  title: string;
+  status: IssueStatus;
+  priority: IssuePriority;
+  assignee: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatarUrl: string | null;
+  } | null;
+}
+
+export interface SubtaskStats {
+  total: number;
+  done: number;
+}
+
 export interface IssueDto {
   id: string;
   number: number;
@@ -25,6 +46,10 @@ export interface IssueDto {
   createdAt: string;
   updatedAt: string;
   labels: IssueLabel[];
+  parentId: string | null;
+  parent: IssueSummary | null;
+  subtasks: IssueSummary[];
+  subtaskStats: SubtaskStats;
   createdBy: {
     id: string;
     name: string | null;
@@ -47,6 +72,8 @@ export interface CreateIssuePayload {
   priority?: IssuePriority;
   assigneeId?: string;
   dueDate?: string;
+  /** Creates this issue directly as a subtask of the given parent issue ID. */
+  parentId?: string;
 }
 
 export interface UpdateIssuePayload {
@@ -61,6 +88,10 @@ export interface UpdateIssuePayload {
 export interface ReorderIssuePayload {
   boardOrder: number;
   status?: IssueStatus;
+}
+
+export interface SetParentPayload {
+  parentId: string | null;
 }
 
 export interface IssueFilters {
