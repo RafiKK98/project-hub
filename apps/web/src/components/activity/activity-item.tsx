@@ -6,6 +6,7 @@ import {
   IssuePriority,
   IssueStatus,
   LabelsChangedPayload,
+  ParentChangedPayload,
   PriorityChangedPayload,
   StatusChangedPayload,
 } from "@projecthub/types";
@@ -13,6 +14,7 @@ import {
   Calendar,
   CircleDot,
   FileText,
+  GitBranch,
   LucideIcon,
   Pencil,
   Sparkles,
@@ -99,6 +101,24 @@ function describeActivity(activity: ActivityDto): {
       if (p.removed.length)
         parts.push(`removed ${p.removed.map((l) => l.name).join(", ")}`);
       return { icon: Tag, text: `${actorName} ${parts.join(" and ")}` };
+    }
+
+    case "PARENT_CHANGED": {
+      const p = activity.payload as ParentChangedPayload;
+      if (!p.oldParentKey && p.newParentKey)
+        return {
+          icon: GitBranch,
+          text: `${actorName} marked this as a sub-issue of ${p.newParentKey}`,
+        };
+      if (p.oldParentKey && !p.newParentKey)
+        return {
+          icon: GitBranch,
+          text: `${actorName} removed this from ${p.oldParentKey}`,
+        };
+      return {
+        icon: GitBranch,
+        text: `${actorName} moved this from ${p.oldParentKey} to ${p.newParentKey}`,
+      };
     }
 
     default:
